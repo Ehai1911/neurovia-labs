@@ -10,7 +10,7 @@
 :root{
   --bg:#080a10;--bg2:#0d1018;--bg3:#131620;
   --line2:#ffffff12;
-  --acid:#b8ff3c;--acid-d:#b8ff3c18;
+  --acid:#b8ff3c;--acid-d:#b8ff3c18;--acid-dd:#b8ff3c18;
   --sky:#41c8ff;
   --txt:#dde1f0;--txt2:#7c819a;--txt3:#3d4157;
 }
@@ -104,6 +104,16 @@ td strong{color:var(--txt)}
 .rec-details{font-size:9px;color:var(--sky)}
 
 .btn-analysis{width:100%;padding:10px;margin-top:12px;background:linear-gradient(135deg,var(--acid) 0%,#85dd1f 100%);color:var(--bg);border:none;border-radius:6px;font-weight:600;font-size:11px;cursor:pointer}
+
+#loadingScreen{flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-spinner{width:56px;height:56px;border:3px solid var(--line2);border-top:3px solid var(--acid);border-radius:50%;animation:spin 1s linear infinite}
+.loading-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--acid);letter-spacing:2px}
+.loading-sub{font-size:11px;color:var(--txt2);text-align:center;max-width:300px;line-height:1.6}
+.loading-steps{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.loading-step{font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:8px}
+.loading-step.done{color:var(--acid)}
+.loading-step.active{color:var(--sky)}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:100;overflow-y:auto;padding:20px}
 .modal.open{display:block}
@@ -240,6 +250,18 @@ td strong{color:var(--txt)}
           <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display:none">← НАЗАД</button>
           <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">ДАЛЬШЕ →</button>
         </div>
+      </div>
+    </div>
+
+    <div id="loadingScreen" class="screen">
+      <div class="loading-spinner"></div>
+      <div class="loading-title">CIPHER АНАЛИЗИРУЕТ</div>
+      <div class="loading-sub" id="loadingStatus">Определяем конкурентов для вашего рынка...</div>
+      <div class="loading-steps">
+        <div class="loading-step" id="ls1">⬜ Анализ рынка и конкурентов</div>
+        <div class="loading-step" id="ls2">⬜ Финансовые метрики</div>
+        <div class="loading-step" id="ls3">⬜ Стратегия на год</div>
+        <div class="loading-step" id="ls4">⬜ Финальные рекомендации</div>
       </div>
     </div>
 
@@ -424,6 +446,43 @@ td strong{color:var(--txt)}
 
     function startAnalysis() {
       document.getElementById('questionsScreen').classList.remove('active');
+      document.getElementById('loadingScreen').classList.add('active');
+      fetchAnalysis();
+    }
+
+    async function fetchAnalysis() {
+      const steps = ['ls1','ls2','ls3','ls4'];
+      const delays = [800, 1800, 2800, 3800];
+
+      delays.forEach((d, i) => {
+        setTimeout(() => {
+          steps.forEach((s, j) => {
+            const el = document.getElementById(s);
+            if (j < i) { el.textContent = el.textContent.replace('⬜','✅'); el.classList.add('done'); el.classList.remove('active'); }
+            else if (j === i) { el.textContent = el.textContent.replace('⬜','🔄'); el.classList.add('active'); }
+          });
+        }, d);
+      });
+
+      try {
+        const response = await fetch('/.netlify/functions/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.data)
+        });
+
+        if (!response.ok) throw new Error('API error ' + response.status);
+        const aiData = await response.json();
+
+        if (aiData && aiData.market && aiData.strategy) {
+          state.aiData = aiData;
+        }
+      } catch (e) {
+        // Fallback на захардкоженные данные
+        state.aiData = null;
+      }
+
+      document.getElementById('loadingScreen').classList.remove('active');
       document.getElementById('analysisScreen').classList.add('active');
       renderTabs();
     }
@@ -434,23 +493,39 @@ td strong{color:var(--txt)}
       switchTab(0);
     }
 
+    function renderStrategyQuarter(q, data, label, color) {
+      const actions = (data.actions || []).map(a =>
+        `<div class="summary-item">✓ <strong>${a.title}</strong> (${a.budget})</div>
+         <div class="summary-item">  └ ${a.detail}</div>`
+      ).join('');
+      return `
+        <div class="summary-box">
+          <div class="summary-title" style="font-size:13px">${color} ${label}</div>
+          <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
+            <strong style="color:var(--acid)">📌 Главная цель:</strong> ${data.goal || ''}<br>
+            <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">${data.learnFrom || ''}</span>
+          </div>
+          ${actions}
+          <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
+            <strong style="color:var(--acid)">📊 Метрики:</strong> ${data.metrics || ''}
+          </div>
+        </div>`;
+    }
+
     function switchTab(idx) {
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('on', i === idx));
-      
+
       const tab = TABS[idx];
       const product = state.data.product || 'Ваш продукт';
       const segment = state.data.segment || 'ваш сегмент';
-      const geo = Array.isArray(state.data.geography) ? state.data.geography[0] : 'ваш регион';
-      
-      if(tab.id === 'strategy') {
-        const html = `
-          <h2 style="color:var(--acid);margin-bottom:16px;font-size:16px;font-family:'Syne',sans-serif">📋 СТРАТЕГИЯ ДЛЯ ${product.toUpperCase()}</h2>
-          
-          <div class="summary-box" style="background:rgba(184,255,60,.08);border:2px solid rgba(184,255,60,.3)">
-            <div class="summary-title" style="font-size:12px">🚀 ПЛАН НА ГОД</div>
-            <div class="summary-item">💵 Инвестиции: ~$200K | 📈 ARR: +$1.5M | ⏱️ Payback: 6-8 месяцев</div>
-          </div>
+      const geo = Array.isArray(state.data.geography) ? state.data.geography.join(', ') : 'ваш регион';
 
+      if(tab.id === 'strategy') {
+        const ai = state.aiData && state.aiData.strategy;
+        const s = ai || {};
+        const f = s.finance || {};
+
+        const q1html = ai ? renderStrategyQuarter('q1', s.q1 || {}, '🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ', '🔴') : `
           <div class="summary-box">
             <div class="summary-title" style="font-size:13px">🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ</div>
             <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
@@ -461,13 +536,14 @@ td strong{color:var(--txt)}
             <div class="summary-item">  └ Касса, платежи, ЯП, обозначения</div>
             <div class="summary-item">✓ <strong>Оптимизируй для ${segment}</strong> ($8K)</div>
             <div class="summary-item">  └ UI/UX, документация, видео-обучение</div>
-            <div class="summary-item">✓ <strong>Встроь AI асистента</strong> ($15K)</div>
+            <div class="summary-item">✓ <strong>Встрой AI ассистента</strong> ($15K)</div>
             <div class="summary-item">  └ ChatGPT интеграция, автоматизация</div>
             <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
               <strong style="color:var(--acid)">📊 Метрики:</strong> +40% конверсии, +$300K ARR, -30% CAC
             </div>
-          </div>
+          </div>`;
 
+        const q2html = ai ? renderStrategyQuarter('q2', s.q2 || {}, '🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ', '🟡') : `
           <div class="summary-box">
             <div class="summary-title" style="font-size:13px">🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ</div>
             <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
@@ -475,16 +551,17 @@ td strong{color:var(--txt)}
               <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">HubSpot (Content) + Pipedrive (PLG)</span>
             </div>
             <div class="summary-item">✓ <strong>Запусти PLG стратегию</strong> ($10K)</div>
-            <div class="summary-item">  └ Free trial 14 дней, guided onboarding, в-во интеграций</div>
+            <div class="summary-item">  └ Free trial 14 дней, guided onboarding</div>
             <div class="summary-item">✓ <strong>Content Marketing</strong> ($8K/мес)</div>
-            <div class="summary-item">  └ Blog (50 постов), YouTube (10 видео), гайды, кейсы</div>
+            <div class="summary-item">  └ Blog (50 постов), YouTube (10 видео)</div>
             <div class="summary-item">✓ <strong>Интеграции Slack/Teams</strong> ($10K)</div>
             <div class="summary-item">  └ Native бот, уведомления, синхронизация</div>
             <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> -50% CAC, +100K органических visitors, +25% signup
+              <strong style="color:var(--acid)">📊 Метрики:</strong> -50% CAC, +100K visitors, +25% signup
             </div>
-          </div>
+          </div>`;
 
+        const q3html = ai ? renderStrategyQuarter('q3', s.q3 || {}, '🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ', '🟡') : `
           <div class="summary-box">
             <div class="summary-title" style="font-size:13px">🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ</div>
             <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
@@ -492,16 +569,17 @@ td strong{color:var(--txt)}
               <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">HubSpot (Freemium) + Salesforce (Enterprise)</span>
             </div>
             <div class="summary-item">✓ <strong>Freemium план</strong> ($3K)</div>
-            <div class="summary-item">  └ Бесплатный уровень для SMB, upgrade после 50 контактов</div>
+            <div class="summary-item">  └ Бесплатный уровень для SMB</div>
             <div class="summary-item">✓ <strong>SOC2 сертификация</strong> ($8K)</div>
-            <div class="summary-item">  └ Обязательно для Enterprise, даёт доверие</div>
+            <div class="summary-item">  └ Обязательно для Enterprise</div>
             <div class="summary-item">✓ <strong>Enterprise план</strong> ($2K)</div>
-            <div class="summary-item">  └ Custom интеграции, SSO, белая этикетка, поддержка 24/7</div>
+            <div class="summary-item">  └ Custom интеграции, SSO, поддержка 24/7</div>
             <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> +60% free users, +$500K Enterprise ARR potential, LTV/CAC = 12x
+              <strong style="color:var(--acid)">📊 Метрики:</strong> +60% free users, +$500K Enterprise ARR, LTV/CAC = 12x
             </div>
-          </div>
+          </div>`;
 
+        const q4html = ai ? renderStrategyQuarter('q4', s.q4 || {}, '🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ', '🟢') : `
           <div class="summary-box">
             <div class="summary-title" style="font-size:13px">🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ</div>
             <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
@@ -509,45 +587,61 @@ td strong{color:var(--txt)}
               <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">Pipedrive (Affiliate) + Zoho (Mobile)</span>
             </div>
             <div class="summary-item">✓ <strong>Affiliate Program</strong> ($2K)</div>
-            <div class="summary-item">  └ 20 партнёров, 20-30% комиссия, маркетинг материалы</div>
+            <div class="summary-item">  └ 20 партнёров, 20-30% комиссия</div>
             <div class="summary-item">✓ <strong>Native мобильное приложение</strong> ($25K)</div>
-            <div class="summary-item">  └ iOS + Android, offline режим, push-уведомления</div>
+            <div class="summary-item">  └ iOS + Android, offline режим</div>
             <div class="summary-item">✓ <strong>PR & медиа в ${geo}</strong> ($10K)</div>
-            <div class="summary-item">  └ TechCrunch, Forbes, местные издания, интервью</div>
+            <div class="summary-item">  └ TechCrunch, Forbes, местные издания</div>
             <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> +40% mobile adoption, +$150K ARR из affiliate, +10M media impressions
+              <strong style="color:var(--acid)">📊 Метрики:</strong> +40% mobile adoption, +$150K ARR из affiliate
             </div>
+          </div>`;
+
+        const totalInvest = f.totalInvest || '$112K';
+        const arr = f.arr || '$1.5M';
+        const payback = f.payback || '6-8 месяцев';
+        const roi = f.roi || '1250%';
+        const q1i = f.q1invest || '$28K'; const q2i = f.q2invest || '$28K';
+        const q3i = f.q3invest || '$19K'; const q4i = f.q4invest || '$37K';
+        const q1r = f.q1revenue || '$50K'; const q2r = f.q2revenue || '$200K';
+        const q3r = f.q3revenue || '$450K'; const q4r = f.q4revenue || '$800K';
+        const ltvCac = f.ltvCac || '12x';
+        const gm = f.grossMargin || '80%+';
+
+        const html = `
+          <h2 style="color:var(--acid);margin-bottom:16px;font-size:16px;font-family:'Syne',sans-serif">📋 СТРАТЕГИЯ ДЛЯ ${product.toUpperCase()}</h2>
+
+          <div class="summary-box" style="background:rgba(184,255,60,.08);border:2px solid rgba(184,255,60,.3)">
+            <div class="summary-title" style="font-size:12px">🚀 ПЛАН НА ГОД</div>
+            <div class="summary-item">💵 Инвестиции: ~${totalInvest} | 📈 ARR: +${arr} | ⏱️ Payback: ${payback}</div>
           </div>
 
+          ${q1html}${q2html}${q3html}${q4html}
+
           <div style="background:rgba(255,194,51,.05);border:1px solid rgba(255,194,51,.2);border-radius:8px;padding:12px;margin-top:16px">
-            <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">💰 ИТОГОВЫЙ ФИНАНСОВЫЙ ПРОГНОЗ ДЛЯ ${product.toUpperCase()}</div>
+            <div style="font-size:12px;font-weight:600;color:#ffc233;margin-bottom:8px">💰 ИТОГОВЫЙ ФИНАНСОВЫЙ ПРОГНОЗ ДЛЯ ${product.toUpperCase()}</div>
             <div style="font-size:10px;color:var(--txt2);line-height:1.8">
               <strong>Год 1 (Инвестиции):</strong><br>
-              └ Q1: $28K | Q2: $28K | Q3: $19K | Q4: $37K | <strong style="color:var(--acid)">ИТОГО: $112K</strong><br><br>
+              └ Q1: ${q1i} | Q2: ${q2i} | Q3: ${q3i} | Q4: ${q4i} | <strong style="color:var(--acid)">ИТОГО: ${totalInvest}</strong><br><br>
               <strong>Год 1 (Доход):</strong><br>
-              └ Q1: $50K | Q2: $200K | Q3: $450K | Q4: $800K | <strong style="color:var(--acid)">ARR: $1.5M</strong><br><br>
+              └ Q1: ${q1r} | Q2: ${q2r} | Q3: ${q3r} | Q4: ${q4r} | <strong style="color:var(--acid)">ARR: ${arr}</strong><br><br>
               <strong>Финансовые показатели:</strong><br>
-              └ Payback period: 6-8 месяцев<br>
-              └ LTV/CAC ratio: 12x<br>
-              └ Gross Margin: 80%+<br>
-              └ CAC: $400 → $200 (снижение на 50%)
+              └ Payback period: ${payback}<br>
+              └ ROI: ${roi}<br>
+              └ LTV/CAC ratio: ${ltvCac}<br>
+              └ Gross Margin: ${gm}
             </div>
           </div>
         `;
         document.getElementById('content').innerHTML = html;
       } else {
-        const data = TAB_DATA[tab.id];
-        let bestCompany = 'HubSpot';
-        let bestAdvice = 'быстрый старт и простоту';
-        
-        if(tab.id === 'market') {bestCompany = 'Salesforce'; bestAdvice = 'доминирование через Enterprise';}
-        else if(tab.id === 'audience') {bestCompany = 'HubSpot'; bestAdvice = 'фокус на SMB боли';}
-        else if(tab.id === 'economics') {bestCompany = 'HubSpot'; bestAdvice = 'Freemium модель';}
-        else if(tab.id === 'channels') {bestCompany = 'Pipedrive'; bestAdvice = 'PLG + YouTube';}
-        else if(tab.id === 'product') {bestCompany = 'HubSpot'; bestAdvice = 'интеграции + AI';}
-        else if(tab.id === 'reputation') {bestCompany = 'HubSpot'; bestAdvice = 'G2 стратегия и NPS';}
-        else if(tab.id === 'macro') {bestCompany = 'Salesforce'; bestAdvice = 'SOC2 + GDPR compliance';}
-        
+        const aiTabData = state.aiData && state.aiData[tab.id];
+        const data = aiTabData || TAB_DATA[tab.id];
+        const bestCompany = data.bestCompany || 'HubSpot';
+        const bestAdvice = data.bestAdvice || 'лучшие практики';
+        const criticalRec = (state.aiData && state.aiData.strategy && state.aiData.strategy.criticalRec) || `Локализируйте ${product} под ${geo}`;
+        const importantRec = (state.aiData && state.aiData.strategy && state.aiData.strategy.importantRec) || `Оптимизируйте UX для ${segment}`;
+
         const tableHtml = `
           <table>
             <thead><tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
@@ -557,7 +651,7 @@ td strong{color:var(--txt)}
 
         const html = `
           <h2 style="color:var(--acid);margin-bottom:12px;font-size:14px">${tab.emoji} ${tab.title}</h2>
-          
+
           <div style="background:rgba(65,200,255,.08);border:1px solid rgba(65,200,255,.2);border-radius:8px;padding:10px;margin-bottom:14px">
             <div style="font-size:10px;color:var(--txt2)">
               <strong style="color:var(--sky)">👤 Учись у ${bestCompany}:</strong> ${bestAdvice}
@@ -565,7 +659,7 @@ td strong{color:var(--txt)}
           </div>
 
           <div class="table-wrapper">${tableHtml}</div>
-          
+
           <div class="summary-box">
             <div class="summary-title">📍 ВЫВОДЫ</div>
             ${data.summary.map(s => `<div class="summary-item">• ${s}</div>`).join('')}
@@ -573,14 +667,12 @@ td strong{color:var(--txt)}
 
           <div class="rec-item">
             <div class="rec-pri">🔴 КРИТИЧНО</div>
-            <div class="rec-title">Локализируйте ${product}</div>
-            <div class="rec-details">Budget: $5K | Timeline: 10 дней | Результат: +30%</div>
+            <div class="rec-title">${criticalRec}</div>
           </div>
 
           <div class="rec-item">
             <div class="rec-pri">🟡 ВАЖНО</div>
-            <div class="rec-title">Оптимизируйте для ${segment}</div>
-            <div class="rec-details">Budget: $8K | Timeline: 3 нед | Результат: +40%</div>
+            <div class="rec-title">${importantRec}</div>
           </div>
 
           <button class="btn-analysis" onclick="showModal(${idx})">📊 ПОЛНЫЙ АНАЛИЗ</button>
@@ -591,7 +683,7 @@ td strong{color:var(--txt)}
 
     function showModal(idx) {
       const tab = TABS[idx];
-      const data = TAB_DATA[tab.id];
+      const data = (state.aiData && state.aiData[tab.id]) || TAB_DATA[tab.id];
       const product = state.data.product || 'Ваш продукт';
       
       document.getElementById('modalTitle').textContent = tab.emoji + ' ' + tab.title + ' для ' + product;
@@ -612,7 +704,11 @@ td strong{color:var(--txt)}
         </div>
         <div>
           <div style="font-weight:600;color:var(--acid);margin-bottom:6px;font-size:11px">💡 РЕКОМЕНДАЦИИ</div>
-          <div style="font-size:10px;color:var(--txt2)">1. Локализируйте ${product}<br>2. Оптимизируйте стратегию<br>3. Запустите инициативы</div>
+          <div style="font-size:10px;color:var(--txt2)">${
+            (state.aiData && state.aiData.strategy)
+              ? `1. ${state.aiData.strategy.criticalRec || ''}<br>2. ${state.aiData.strategy.importantRec || ''}`
+              : `1. Локализируйте ${product}<br>2. Оптимизируйте стратегию<br>3. Запустите инициативы`
+          }</div>
         </div>
       `;
       document.getElementById('modal').classList.add('open');
