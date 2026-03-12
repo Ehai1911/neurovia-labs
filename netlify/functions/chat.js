@@ -7,8 +7,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { message } = JSON.parse(event.body);
-    
+    const { message, productData, analysisData } = JSON.parse(event.body);
+
     if (!message) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Message required' }) };
     }
@@ -18,31 +18,49 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
     }
 
+    // Строим контекст из реальных данных пользователя
+    let contextBlock = '';
+    if (productData) {
+      const geo = Array.isArray(productData.geography) ? productData.geography.join(', ') : (productData.geography || '');
+      const adv = Array.isArray(productData.advantages) ? productData.advantages.join(', ') : (productData.advantages || '');
+      contextBlock += `\nПродукт пользователя:
+- Сфера: ${productData.area || ''}
+- Сегмент: ${productData.segment || ''}
+- Название: ${productData.product || ''}
+- Описание: ${productData.description || ''}
+- География: ${geo}
+- Преимущества: ${adv}
+- Цена: ${productData.price || ''}`;
+    }
+    if (analysisData) {
+      if (analysisData.market) {
+        const competitors = (analysisData.market.rows || []).map(r => r[0]).join(', ');
+        contextBlock += `\nВыявленные конкуренты: ${competitors}`;
+        if (analysisData.market.summary) contextBlock += `\nВыводы по рынку: ${analysisData.market.summary.join('; ')}`;
+      }
+      if (analysisData.economics && analysisData.economics.summary) {
+        contextBlock += `\nВыводы по экономике: ${analysisData.economics.summary.join('; ')}`;
+      }
+      if (analysisData.strategy) {
+        const fin = analysisData.strategy.finance || {};
+        contextBlock += `\nФинансы: инвестиции ${fin.totalInvest || ''}, ARR ${fin.arr || ''}, ROI ${fin.roi || ''}, payback ${fin.payback || ''}`;
+        if (analysisData.strategy.criticalRec) contextBlock += `\nКлючевая рекомендация: ${analysisData.strategy.criticalRec}`;
+      }
+    }
+
+    const systemPrompt = `Ты NOVA - ассистент платформы CIPHER v3 для конкурентного анализа.
+Отвечай по-русски, конкретно и по существу (2-3 абзаца), опираясь на данные анализа пользователя.
+Не выдумывай данные которых нет в контексте — лучше скажи что информации недостаточно.
+${contextBlock || 'Данные анализа ещё не загружены. Отвечай на общие вопросы о конкурентном анализе.'}`;
+
     const requestData = JSON.stringify({
-      model: 'gpt-4',
+      model: 'gpt-4o',
       messages: [
-        {
-          role: 'system',
-          content: `Ты NOVA - ассистент для платформы CIPHER v3 анализа конкурентов. 
-          Отвечай по-русски, кратко (1-2 абзаца), на основе этой информации:
-          
-          - TAM: общий размер рынка, $128B для CRM с ростом 13-30% в год
-          - CAC: стоимость привлечения клиента, $200-$8K в зависимости от GTM
-          - LTV: lifetime value, $5K-$48K за счет долгого использования
-          - CAGR: среднегодовой рост 13-30%, лучше PLG компании
-          - Payback: 6-8 месяцев - когда инвестиции окупаются
-          - GTM: PLG (бесплатно + upgrade), контент, партнерства
-          - Стратегия: Q1 локализация, Q2 расширение, Q3 монетизация, Q4 масштабирование
-          - Инвестиции: $112K на год 1 -> $1.5M ARR (ROI 1250%)
-          - Главные конкуренты: Salesforce, HubSpot, Pipedrive, amoCRM, Zoho`
-        },
-        {
-          role: 'user',
-          content: message
-        }
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message }
       ],
       temperature: 0.7,
-      max_tokens: 200
+      max_tokens: 600
     });
 
     return new Promise((resolve) => {

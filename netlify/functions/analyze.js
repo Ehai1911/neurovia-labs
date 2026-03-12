@@ -1,23 +1,66 @@
 const https = require('https');
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
+// ─── Утилита: HTTP POST → Promise ──────────────────────────────────────────
+function httpPost(hostname, path, headers, body) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const req = https.request({
+      hostname,
+      path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data),
+        ...headers
+      }
+    }, (res) => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(raw)); }
+        catch (e) { reject(new Error('Parse error: ' + raw.substring(0, 300))); }
+      });
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
+// ─── Агент 1: Поиск в интернете (OpenAI Responses API + web_search) ────────
+async function searchAgent(area, segment, geo, product, description, apiKey) {
+  const query = `Find TOP 5 real competitors for a "${area}" product called "${product}" — ${description}. Target segment: ${segment}, geography: ${geo}. For each competitor provide: pricing, market share, TAM, CAGR, CAC, LTV — real 2024-2025 data.`;
 
   try {
-    const body = JSON.parse(event.body);
-    const { area, segment, product, description, geography, advantages, price } = body;
+    const resp = await httpPost('api.openai.com', '/v1/responses',
+      { 'Authorization': `Bearer ${apiKey}` },
+      {
+        model: 'gpt-4o-search-preview',
+        web_search_options: { search_context_size: 'medium' },
+        input: query
+      }
+    );
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
+    if (resp.output) {
+      const msg = resp.output.find(item => item.type === 'message');
+      if (msg && msg.content) {
+        const txt = msg.content.find(c => c.type === 'output_text');
+        if (txt) return txt.text;
+      }
     }
+  } catch (e) {
+    // Если поиск недоступен — продолжаем без него
+  }
+  return '';
+}
 
-    const geo = Array.isArray(geography) ? geography.join(', ') : (geography || 'глобально');
-    const adv = Array.isArray(advantages) ? advantages.join(', ') : (advantages || '');
+// ─── Агент 2: Структурирование данных в JSON (GPT-4o Chat Completions) ─────
+async function analysisAgent(area, segment, product, description, geo, adv, price, searchContext, apiKey) {
+  const contextBlock = searchContext
+    ? `\nРЕАЛЬНЫЕ ДАННЫЕ ИЗ ПОИСКА (используй их как основу):\n${searchContext}\n`
+    : '';
 
-    const prompt = `Ты эксперт по конкурентному анализу. Пользователь описал свой продукт:
+  const prompt = `Ты эксперт по конкурентному анализу. Пользователь описал свой продукт:
 - Сфера: ${area}
 - Сегмент клиентов: ${segment}
 - Название продукта: ${product}
@@ -25,226 +68,152 @@ exports.handler = async (event) => {
 - География: ${geo}
 - Преимущества: ${adv}
 - Ценовой диапазон: ${price}
+${contextBlock}
+Найди TOP 5 реальных конкурентов для сферы "${area}" и географии "${geo}".
+НЕ используй CRM компании если сфера не CRM. Подбери конкурентов релевантных описанию.
 
-Найди TOP 5 реальных конкурентов именно для этой сферы (${area}) и географии (${geo}). НЕ используй CRM компании если сфера не CRM. Подбери конкурентов релевантных описанию продукта.
-
-Создай полный конкурентный анализ. Верни ТОЛЬКО валидный JSON (без markdown, без \`\`\`) в точно таком формате:
+Верни ТОЛЬКО валидный JSON (без markdown) в таком формате:
 
 {
   "market": {
     "headers": ["Компания","TAM","CAGR","Доля рынка","Позиция"],
-    "rows": [
-      ["Конкурент1","$XXB","XX%","XX%","Позиция"],
-      ["Конкурент2","$XXB","XX%","XX%","Позиция"],
-      ["Конкурент3","$XXB","XX%","XX%","Позиция"],
-      ["Конкурент4","$XXB","XX%","XX%","Позиция"],
-      ["Конкурент5","$XXB","XX%","XX%","Позиция"]
-    ],
-    "summary": ["вывод о рынке 1","вывод о рынке 2","вывод о рынке 3"],
-    "bestCompany": "Компания для обучения",
-    "bestAdvice": "чему именно научиться"
+    "rows": [["К1","$XXB","XX%","XX%","позиция"],["К2","$XXB","XX%","XX%","позиция"],["К3","$XXB","XX%","XX%","позиция"],["К4","$XXB","XX%","XX%","позиция"],["К5","$XXB","XX%","XX%","позиция"]],
+    "summary": ["вывод 1","вывод 2","вывод 3"],
+    "bestCompany": "компания",
+    "bestAdvice": "совет"
   },
   "audience": {
     "headers": ["Компания","Сегмент","Ключевые роли","Jobs-to-be-done","Зрелость"],
-    "rows": [
-      ["Конкурент1","сегмент","роли","jobs","уровень"],
-      ["Конкурент2","сегмент","роли","jobs","уровень"],
-      ["Конкурент3","сегмент","роли","jobs","уровень"],
-      ["Конкурент4","сегмент","роли","jobs","уровень"],
-      ["Конкурент5","сегмент","роли","jobs","уровень"]
-    ],
+    "rows": [["К1","сегмент","роли","jobs","уровень"],["К2","сегмент","роли","jobs","уровень"],["К3","сегмент","роли","jobs","уровень"],["К4","сегмент","роли","jobs","уровень"],["К5","сегмент","роли","jobs","уровень"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "economics": {
     "headers": ["Компания","Модель","Цена","LTV","CAC","Payback"],
-    "rows": [
-      ["Конкурент1","модель","цена","LTV","CAC","период"],
-      ["Конкурент2","модель","цена","LTV","CAC","период"],
-      ["Конкурент3","модель","цена","LTV","CAC","период"],
-      ["Конкурент4","модель","цена","LTV","CAC","период"],
-      ["Конкурент5","модель","цена","LTV","CAC","период"]
-    ],
+    "rows": [["К1","модель","цена","LTV","CAC","период"],["К2","модель","цена","LTV","CAC","период"],["К3","модель","цена","LTV","CAC","период"],["К4","модель","цена","LTV","CAC","период"],["К5","модель","цена","LTV","CAC","период"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "channels": {
     "headers": ["Компания","Основной GTM","Вторичные","Контент","Бюджет"],
-    "rows": [
-      ["Конкурент1","GTM","каналы","тип контента","High/Med/Low"],
-      ["Конкурент2","GTM","каналы","тип контента","High/Med/Low"],
-      ["Конкурент3","GTM","каналы","тип контента","High/Med/Low"],
-      ["Конкурент4","GTM","каналы","тип контента","High/Med/Low"],
-      ["Конкурент5","GTM","каналы","тип контента","High/Med/Low"]
-    ],
+    "rows": [["К1","GTM","каналы","контент","High/Med/Low"],["К2","GTM","каналы","контент","High/Med/Low"],["К3","GTM","каналы","контент","High/Med/Low"],["К4","GTM","каналы","контент","High/Med/Low"],["К5","GTM","каналы","контент","High/Med/Low"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "product": {
     "headers": ["Компания","Ключевые фичи","AI","Интеграции","Mobile","Барьеры входа"],
-    "rows": [
-      ["Конкурент1","фичи","Yes/No","кол-во","Yes/No","уровень"],
-      ["Конкурент2","фичи","Yes/No","кол-во","Yes/No","уровень"],
-      ["Конкурент3","фичи","Yes/No","кол-во","Yes/No","уровень"],
-      ["Конкурент4","фичи","Yes/No","кол-во","Yes/No","уровень"],
-      ["Конкурент5","фичи","Yes/No","кол-во","Yes/No","уровень"]
-    ],
+    "rows": [["К1","фичи","Yes/No","кол-во","Yes/No","уровень"],["К2","фичи","Yes/No","кол-во","Yes/No","уровень"],["К3","фичи","Yes/No","кол-во","Yes/No","уровень"],["К4","фичи","Yes/No","кол-во","Yes/No","уровень"],["К5","фичи","Yes/No","кол-во","Yes/No","уровень"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "reputation": {
-    "headers": ["Компания","Рейтинг G2/App","Отзывов","Главные жалобы","NPS","PR активность"],
-    "rows": [
-      ["Конкурент1","X.X/5","XXK","жалобы","XX","High/Med/Low"],
-      ["Конкурент2","X.X/5","XXK","жалобы","XX","High/Med/Low"],
-      ["Конкурент3","X.X/5","XXK","жалобы","XX","High/Med/Low"],
-      ["Конкурент4","X.X/5","XXK","жалобы","XX","High/Med/Low"],
-      ["Конкурент5","X.X/5","XXK","жалобы","XX","High/Med/Low"]
-    ],
+    "headers": ["Компания","Рейтинг G2","Отзывов","Главные жалобы","NPS","PR активность"],
+    "rows": [["К1","X.X/5","XXK","жалобы","XX","High/Med/Low"],["К2","X.X/5","XXK","жалобы","XX","High/Med/Low"],["К3","X.X/5","XXK","жалобы","XX","High/Med/Low"],["К4","X.X/5","XXK","жалобы","XX","High/Med/Low"],["К5","X.X/5","XXK","жалобы","XX","High/Med/Low"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "macro": {
     "headers": ["Компания","GDPR","SOC2","Локализация","Хранение данных","Стандарты"],
-    "rows": [
-      ["Конкурент1","Yes/No","Yes/No","регионы","Local/Global","стандарты"],
-      ["Конкурент2","Yes/No","Yes/No","регионы","Local/Global","стандарты"],
-      ["Конкурент3","Yes/No","Yes/No","регионы","Local/Global","стандарты"],
-      ["Конкурент4","Yes/No","Yes/No","регионы","Local/Global","стандарты"],
-      ["Конкурент5","Yes/No","Yes/No","регионы","Local/Global","стандарты"]
-    ],
+    "rows": [["К1","Yes/No","Yes/No","регионы","Local/Global","стандарты"],["К2","Yes/No","Yes/No","регионы","Local/Global","стандарты"],["К3","Yes/No","Yes/No","регионы","Local/Global","стандарты"],["К4","Yes/No","Yes/No","регионы","Local/Global","стандарты"],["К5","Yes/No","Yes/No","регионы","Local/Global","стандарты"]],
     "summary": ["вывод 1","вывод 2","вывод 3"],
-    "bestCompany": "Компания",
+    "bestCompany": "компания",
     "bestAdvice": "совет"
   },
   "strategy": {
     "q1": {
-      "goal": "Главная цель первого квартала для ${product} в ${geo}",
-      "learnFrom": "Компания1 (что именно) + Компания2 (что именно)",
+      "goal": "цель Q1 для ${product} в ${geo}",
+      "learnFrom": "Компания1 (что) + Компания2 (что)",
       "actions": [
-        {"title": "Конкретное действие 1", "budget": "$XK", "detail": "детали реализации"},
-        {"title": "Конкретное действие 2", "budget": "$XK", "detail": "детали реализации"},
-        {"title": "Конкретное действие 3", "budget": "$XK", "detail": "детали реализации"}
+        {"title": "действие 1","budget": "$XK","detail": "детали"},
+        {"title": "действие 2","budget": "$XK","detail": "детали"},
+        {"title": "действие 3","budget": "$XK","detail": "детали"}
       ],
-      "metrics": "+XX% конверсии, +$XXXK ARR, -XX% CAC"
+      "metrics": "+XX% конверсии, +$XXXK ARR"
     },
     "q2": {
-      "goal": "Главная цель второго квартала",
+      "goal": "цель Q2",
       "learnFrom": "Компания1 (что) + Компания2 (что)",
-      "actions": [
-        {"title": "Действие 1", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 2", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 3", "budget": "$XK", "detail": "детали"}
-      ],
-      "metrics": "метрики результата"
+      "actions": [{"title":"действие 1","budget":"$XK","detail":"детали"},{"title":"действие 2","budget":"$XK","detail":"детали"},{"title":"действие 3","budget":"$XK","detail":"детали"}],
+      "metrics": "метрики"
     },
     "q3": {
-      "goal": "Главная цель третьего квартала",
+      "goal": "цель Q3",
       "learnFrom": "Компания1 (что) + Компания2 (что)",
-      "actions": [
-        {"title": "Действие 1", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 2", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 3", "budget": "$XK", "detail": "детали"}
-      ],
-      "metrics": "метрики результата"
+      "actions": [{"title":"действие 1","budget":"$XK","detail":"детали"},{"title":"действие 2","budget":"$XK","detail":"детали"},{"title":"действие 3","budget":"$XK","detail":"детали"}],
+      "metrics": "метрики"
     },
     "q4": {
-      "goal": "Главная цель четвёртого квартала",
+      "goal": "цель Q4",
       "learnFrom": "Компания1 (что) + Компания2 (что)",
-      "actions": [
-        {"title": "Действие 1", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 2", "budget": "$XK", "detail": "детали"},
-        {"title": "Действие 3", "budget": "$XK", "detail": "детали"}
-      ],
-      "metrics": "метрики результата"
+      "actions": [{"title":"действие 1","budget":"$XK","detail":"детали"},{"title":"действие 2","budget":"$XK","detail":"детали"},{"title":"действие 3","budget":"$XK","detail":"детали"}],
+      "metrics": "метрики"
     },
     "finance": {
       "totalInvest": "$XXXK",
       "arr": "$X.XM",
       "payback": "X-X месяцев",
       "roi": "XXXX%",
-      "q1invest": "$XXK",
-      "q2invest": "$XXK",
-      "q3invest": "$XXK",
-      "q4invest": "$XXK",
-      "q1revenue": "$XXXK",
-      "q2revenue": "$XXXK",
-      "q3revenue": "$XXXK",
-      "q4revenue": "$XXXK",
+      "q1invest": "$XXK","q2invest": "$XXK","q3invest": "$XXK","q4invest": "$XXK",
+      "q1revenue": "$XXXK","q2revenue": "$XXXK","q3revenue": "$XXXK","q4revenue": "$XXXK",
       "ltvCac": "Xx",
       "grossMargin": "XX%"
     },
-    "criticalRec": "Самое важное действие для ${product} прямо сейчас",
-    "importantRec": "Второе по важности действие"
+    "criticalRec": "самое важное действие для ${product} прямо сейчас",
+    "importantRec": "второе по важности действие"
   }
 }`;
 
-    const requestData = JSON.stringify({
+  const resp = await httpPost('api.openai.com', '/v1/chat/completions',
+    { 'Authorization': `Bearer ${apiKey}` },
+    {
       model: 'gpt-4o',
       messages: [
-        {
-          role: 'system',
-          content: 'Ты эксперт по конкурентному анализу. Отвечай ТОЛЬКО валидным JSON без markdown блоков. Используй реальные данные о компаниях из указанной сферы.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: 'Отвечай ТОЛЬКО валидным JSON без markdown. Используй реальные данные из контекста поиска.' },
+        { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
+      temperature: 0.3,
       max_tokens: 4000,
       response_format: { type: 'json_object' }
-    });
+    }
+  );
 
-    return new Promise((resolve) => {
-      const req = https.request('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(requestData),
-          'Authorization': `Bearer ${apiKey}`
-        }
-      }, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.choices && parsed.choices[0]) {
-              const content = parsed.choices[0].message.content;
-              const analysis = JSON.parse(content);
-              resolve({
-                statusCode: 200,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-                body: JSON.stringify(analysis)
-              });
-            } else {
-              resolve({
-                statusCode: 500,
-                body: JSON.stringify({ error: 'Invalid OpenAI response', raw: data.substring(0, 200) })
-              });
-            }
-          } catch (e) {
-            resolve({
-              statusCode: 500,
-              body: JSON.stringify({ error: 'Parse error: ' + e.message })
-            });
-          }
-        });
-      });
+  if (!resp.choices || !resp.choices[0]) throw new Error('No response from OpenAI');
+  return JSON.parse(resp.choices[0].message.content);
+}
 
-      req.on('error', (error) => {
-        resolve({ statusCode: 500, body: JSON.stringify({ error: error.message }) });
-      });
+// ─── Основной обработчик ───────────────────────────────────────────────────
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
 
-      req.write(requestData);
-      req.end();
-    });
+  try {
+    const { area, segment, product, description, geography, advantages, price } = JSON.parse(event.body);
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'OPENAI_API_KEY not configured' }) };
+    }
+
+    const geo = Array.isArray(geography) ? geography.join(', ') : (geography || 'глобально');
+    const adv = Array.isArray(advantages) ? advantages.join(', ') : (advantages || '');
+
+    // Агент 1: ищем в интернете
+    const searchContext = await searchAgent(area, segment, geo, product, description, apiKey);
+
+    // Агент 2: структурируем в JSON
+    const analysis = await analysisAgent(area, segment, product, description, geo, adv, price, searchContext, apiKey);
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify(analysis)
+    };
 
   } catch (error) {
     return {
