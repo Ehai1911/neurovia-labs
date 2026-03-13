@@ -143,13 +143,13 @@ ${competitorsBlock}
   const resp = await httpPost('api.openai.com', '/v1/chat/completions',
     { 'Authorization': `Bearer ${apiKey}` },
     {
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: 'Отвечай ТОЛЬКО валидным JSON без markdown. Используй реальные данные из контекста поиска.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.3,
-      max_tokens: 4000,
+      max_tokens: 2500,
       response_format: { type: 'json_object' }
     }
   );
