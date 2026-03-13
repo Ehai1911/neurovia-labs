@@ -310,19 +310,19 @@ td strong{color:var(--txt)}
     ];
 
     const TABS = [
-      {id:'market',emoji:'📊',title:'Рыночный анализ'},
+      {id:'market',emoji:'📊',title:'Рынок'},
       {id:'audience',emoji:'👤',title:'Аудитория'},
-      {id:'economics',emoji:'💰',title:'Экономика'},
-      {id:'channels',emoji:'📣',title:'Каналы'},
+      {id:'economics',emoji:'💰',title:'Юнит-экономика'},
+      {id:'channels',emoji:'📣',title:'Маркетинг и GTM'},
       {id:'product',emoji:'🔧',title:'Продукт'},
       {id:'reputation',emoji:'⭐',title:'Репутация'},
-      {id:'macro',emoji:'🌍',title:'Макро'},
+      {id:'macro',emoji:'🛡️',title:'Соответствие'},
       {id:'strategy',emoji:'📋',title:'Стратегия'}
     ];
 
     const TAB_DATA = {
       market: {
-        headers: ['Компания','TAM','CAGR','Доля','Позиция'],
+        headers: ['Компания','Объём рынка (TAM)','Рост рынка (CAGR)','Доля рынка','Позиция в категории'],
         rows: [
           ['Salesforce','$128B','13%','26%','Enterprise CRM'],
           ['HubSpot','$128B','20%','12%','All-in-one SMB'],
@@ -333,7 +333,7 @@ td strong{color:var(--txt)}
         summary: ['Рынок растёт на 13-30% в год','TOP 5 занимают 50% рынка','Главная боль: долгая настройка']
       },
       audience: {
-        headers: ['Компания','Сегмент','Роли','Jobs','Зрелость'],
+        headers: ['Компания','Сегмент','Ключевые роли','Ключевая боль (Jobs)','Зрелость рынка'],
         rows: [
           ['Salesforce','Enterprise','CTO, VP','Complex','Advanced'],
           ['HubSpot','SMB','Manager','Easy setup','Middle'],
@@ -344,7 +344,7 @@ td strong{color:var(--txt)}
         summary: ['SMB ищет простоту и быстрый ROI','Ключевые роли: Sales Manager, CTO, CFO','Jobs: "нужна CRM за день"']
       },
       economics: {
-        headers: ['Компания','Модель','Цена','LTV','CAC','Payback'],
+        headers: ['Компания','Модель','Цена','Ценность клиента (LTV)','Стоимость привлечения (CAC)','Срок окупаемости'],
         rows: [
           ['Salesforce','SaaS','$165-500','$48K','$8K','6 мес'],
           ['HubSpot','Freemium','Free-3200','$18K','$3K','6 мес'],
@@ -355,7 +355,7 @@ td strong{color:var(--txt)}
         summary: ['SaaS модель доминирует','LTV/CAC ratio 8-14x','Freemium лучше retention']
       },
       channels: {
-        headers: ['Компания','GTM','Вторичные','Контент','Расходы'],
+        headers: ['Компания','Модель выхода (GTM)','Доп. каналы','Контент-стратегия','Бюджет'],
         rows: [
           ['Salesforce','Enterprise','Partns','Whitepapers','High'],
           ['HubSpot','PLG+Content','Email','Blog','Medium'],
@@ -366,7 +366,7 @@ td strong{color:var(--txt)}
         summary: ['PLG — основной тренд','Content Marketing работает','Партнёрские программы эффективны']
       },
       product: {
-        headers: ['Компания','Features','AI','Интеграции','Mobile','Барьеры'],
+        headers: ['Компания','Ключевые функции','Искусственный интеллект (AI)','Интеграции','Моб. приложение','Барьер переключения'],
         rows: [
           ['Salesforce','All','Einstein','500+','Native','Complex'],
           ['HubSpot','Sales+CRM','Yes','1000+','App','Medium'],
@@ -377,7 +377,7 @@ td strong{color:var(--txt)}
         summary: ['AI в CRM обязателен','Slack, Teams критичны','Mobile apps нужны']
       },
       reputation: {
-        headers: ['Компания','G2','Отзывы','Жалобы','NPS','PR'],
+        headers: ['Компания','Рейтинг G2','Кол-во отзывов','Главные жалобы','Индекс лояльности (NPS)','PR активность'],
         rows: [
           ['Salesforce','4.4/5','18K','Дорого','45','High'],
           ['HubSpot','4.5/5','14K','Сложно','50','High'],
@@ -388,7 +388,7 @@ td strong{color:var(--txt)}
         summary: ['G2 4.2-4.5 — стандарт','Жалобы: onboarding, цена, локализация','NPS 40-50']
       },
       macro: {
-        headers: ['Компания','GDPR','SOC2','Локальный','Хранение','Стандарты'],
+        headers: ['Компания','GDPR','SOC2','Целевые регионы','Хранение данных','Сертификации'],
         rows: [
           ['Salesforce','Yes','Yes','EU, US','Global','ISO, FedRAMP'],
           ['HubSpot','Yes','Yes','EU, US','Global','ISO, SOC2'],
