@@ -27,26 +27,29 @@ function httpPost(hostname, path, headers, body) {
   });
 }
 
-// ─── Агент 1: Поиск в интернете (OpenAI Responses API + web_search) ────────
+// ─── Агент 1: Поиск в интернете (OpenAI + web_search) ─────────────────────
 async function searchAgent(area, segment, geo, product, description, apiKey) {
   const query = `Find TOP 5 real competitors for a "${area}" product called "${product}" — ${description}. Target segment: ${segment}, geography: ${geo}. For each competitor provide: market share %, CAGR, pricing tiers, free plan availability, trial period, lead magnet/free offer, loyalty program, traffic sources breakdown (organic/paid/social/email %), main customer complaints, support rating — real 2024-2025 data.`;
 
   try {
-    const resp = await httpPost('api.openai.com', '/v1/chat/completions',
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Search timeout')), 8000)
+    );
+    const search = httpPost('api.openai.com', '/v1/chat/completions',
       { 'Authorization': `Bearer ${apiKey}` },
       {
         model: 'gpt-4o-search-preview',
-        web_search_options: { search_context_size: 'medium' },
+        web_search_options: { search_context_size: 'low' },
         messages: [{ role: 'user', content: query }]
       }
     );
 
+    const resp = await Promise.race([search, timeout]);
     if (resp.choices && resp.choices[0] && resp.choices[0].message) {
       return resp.choices[0].message.content || '';
     }
   } catch (e) {
-    console.error('Search agent error:', e.message);
-    // Если поиск недоступен — продолжаем без него
+    console.error('Search agent skipped:', e.message);
   }
   return '';
 }
