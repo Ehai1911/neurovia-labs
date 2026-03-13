@@ -392,36 +392,36 @@ td strong{color:var(--txt)}
     }
 
     async function fetchAnalysis() {
-      // Шаг 1: поиск конкурентов
       setLoadingStep(0, 'active');
-
-      // Фоновые таймеры — только если API занимает больше 10 секунд
-      const t1 = setTimeout(() => setLoadingStep(1, 'active'), 10000);
-      const t2 = setTimeout(() => setLoadingStep(2, 'active'), 20000);
-      const t3 = setTimeout(() => setLoadingStep(3, 'active'), 30000);
+      const t1 = setTimeout(() => setLoadingStep(1, 'active'), 3000);
+      const t2 = setTimeout(() => setLoadingStep(2, 'active'), 5000);
 
       try {
         const response = await fetch('/.netlify/functions/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state.data)
+          body: JSON.stringify({ ...state.data, tab: 'market' })
         });
 
-        // Ответ пришёл — шаг 2
-        clearTimeout(t1); setLoadingStep(0, 'done'); setLoadingStep(1, 'active');
+        clearTimeout(t1); clearTimeout(t2);
+        setLoadingStep(0, 'done'); setLoadingStep(1, 'done');
+        setLoadingStep(2, 'active');
 
         if (!response.ok) throw new Error('API error ' + response.status);
-        const aiData = await response.json();
+        const data = await response.json();
 
-        // Данные получены — шаги 3 и 4
-        clearTimeout(t2); clearTimeout(t3);
-        setLoadingStep(1, 'done'); setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
+        setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
 
-        if (aiData && aiData.market && aiData.strategy) {
-          state.aiData = aiData;
+        if (data && data.market) {
+          if (!state.aiData) state.aiData = {};
+          state.aiData.market = data.market;
+          if (data.competitors) state.competitorNames = data.competitors;
+        } else {
+          state.aiData = null;
+          state.lastError = 'Нет данных market в ответе';
         }
       } catch (e) {
-        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+        clearTimeout(t1); clearTimeout(t2);
         [0,1,2,3].forEach(i => setLoadingStep(i, 'done'));
         state.aiData = null;
         state.lastError = e.message;
@@ -432,6 +432,33 @@ td strong{color:var(--txt)}
         document.getElementById('analysisScreen').classList.add('active');
         renderTabs();
       }, 300);
+    }
+
+    async function fetchTab(tabId) {
+      const content = document.getElementById('content');
+      content.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:60%;gap:12px;flex-direction:column">
+        <div style="width:36px;height:36px;border:3px solid var(--line2);border-top:3px solid var(--acid);border-radius:50%;animation:spin 1s linear infinite"></div>
+        <div style="font-size:12px;color:var(--txt2)">Загружаю данные...</div>
+      </div>`;
+
+      try {
+        const response = await fetch('/.netlify/functions/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...state.data, tab: tabId, competitorNames: state.competitorNames || [] })
+        });
+        if (!response.ok) throw new Error('API error ' + response.status);
+        const data = await response.json();
+        if (data && data[tabId]) {
+          if (!state.aiData) state.aiData = {};
+          state.aiData[tabId] = data[tabId];
+          if (tabId === 'strategy' && data.strategy) state.aiData.strategy = data.strategy;
+        }
+      } catch (e) {
+        state.lastError = e.message;
+      }
+      const idx = TABS.findIndex(t => t.id === tabId);
+      switchTab(idx);
     }
 
     function renderTabs() {
@@ -538,20 +565,19 @@ td strong{color:var(--txt)}
         const aiTabData = state.aiData && state.aiData[tab.id];
 
         if (!aiTabData) {
+          const isFirstTab = tab.id === 'market';
           document.getElementById('content').innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
-              <div style="font-size:48px">⚠️</div>
-              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Анализ не загрузился</div>
+              <div style="font-size:48px">${isFirstTab ? '⚠️' : '📋'}</div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">${isFirstTab ? 'Анализ не загрузился' : 'Раздел не загружен'}</div>
               <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
-                Не удалось получить данные от AI для раздела <strong style="color:var(--txt)">${tab.emoji} ${tab.title}</strong>.<br>Попробуй запустить анализ ещё раз.
+                ${isFirstTab ? 'Не удалось получить данные от AI.<br>Попробуй снова.' : `Нажми чтобы загрузить раздел <strong style="color:var(--txt)">${tab.emoji} ${tab.title}</strong>.`}
               </div>
-              ${state.lastError ? `<div style="font-size:10px;color:#ff6b6b;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2);border-radius:6px;padding:8px 14px;max-width:360px;word-break:break-all">${state.lastError}</div>` : ''}
-              <button onclick="retryAnalysis()" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),#85dd1f);color:var(--bg);border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
-                🔄 ПОПРОБОВАТЬ СНОВА
+              ${state.lastError && isFirstTab ? `<div style="font-size:10px;color:#ff6b6b;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2);border-radius:6px;padding:8px 14px;max-width:360px;word-break:break-all">${state.lastError}</div>` : ''}
+              <button onclick="${isFirstTab ? 'retryAnalysis()' : `fetchTab('${tab.id}')`}" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),var(--sky));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
+                ${isFirstTab ? '🔄 ПОПРОБОВАТЬ СНОВА' : '⬇️ ЗАГРУЗИТЬ РАЗДЕЛ'}
               </button>
-              <button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">
-                ← Изменить данные
-              </button>
+              ${isFirstTab ? `<button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">← Изменить данные</button>` : ''}
             </div>
           `;
           return;
@@ -641,7 +667,9 @@ td strong{color:var(--txt)}
     }
 
     function retryAnalysis() {
-      state.aiData = undefined;
+      state.aiData = {};
+      state.competitorNames = [];
+      state.lastError = '';
       document.getElementById('analysisScreen').classList.remove('active');
       document.getElementById('loadingScreen').classList.add('active');
       ['ls1','ls2','ls3','ls4'].forEach(id => {
