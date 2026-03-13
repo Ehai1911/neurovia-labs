@@ -312,91 +312,91 @@ td strong{color:var(--txt)}
     const TABS = [
       {id:'market',emoji:'📊',title:'Рынок'},
       {id:'audience',emoji:'👤',title:'Аудитория'},
-      {id:'economics',emoji:'💰',title:'Юнит-экономика'},
+      {id:'pricing',emoji:'💰',title:'Цены и модели'},
       {id:'channels',emoji:'📣',title:'Маркетинг и GTM'},
       {id:'product',emoji:'🔧',title:'Продукт'},
       {id:'reputation',emoji:'⭐',title:'Репутация'},
-      {id:'macro',emoji:'🛡️',title:'Соответствие'},
+      {id:'offers',emoji:'🎯',title:'Офферы'},
       {id:'strategy',emoji:'📋',title:'Стратегия'}
     ];
 
     const TAB_DATA = {
       market: {
-        headers: ['Компания','Объём рынка (TAM)','Рост рынка (CAGR)','Доля рынка','Позиция в категории'],
+        headers: ['Компания','Доля рынка','Рост рынка (CAGR)','Позиция в категории','Тренд'],
         rows: [
-          ['Salesforce','$128B','13%','26%','Enterprise CRM'],
-          ['HubSpot','$128B','20%','12%','All-in-one SMB'],
-          ['Pipedrive','$128B','25%','5%','Sales-focused'],
-          ['amoCRM','$128B','30%','4%','СНГ лидер'],
-          ['Zoho','$128B','18%','3%','Budget']
+          ['Salesforce','26%','13%','Enterprise CRM','→ Стабильно'],
+          ['HubSpot','12%','20%','All-in-one SMB','↑ Растёт'],
+          ['Pipedrive','5%','25%','Sales-focused','↑ Растёт'],
+          ['amoCRM','4%','30%','СНГ лидер','↑ Растёт'],
+          ['Zoho','3%','18%','Budget','→ Стабильно']
         ],
-        summary: ['Рынок растёт на 13-30% в год','TOP 5 занимают 50% рынка','Главная боль: долгая настройка']
+        summary: ['Рынок растёт на 13-30% в год','TOP 5 занимают 50% рынка','Сегмент SMB растёт быстрее всего']
       },
       audience: {
-        headers: ['Компания','Сегмент','Ключевые роли','Ключевая боль (Jobs)','Зрелость рынка'],
+        headers: ['Компания','Сегмент','Ключевые роли','Ключевая боль','Зрелость рынка'],
         rows: [
-          ['Salesforce','Enterprise','CTO, VP','Complex','Advanced'],
-          ['HubSpot','SMB','Manager','Easy setup','Middle'],
-          ['Pipedrive','Sales teams','Sales Rep','Quick wins','Middle'],
-          ['amoCRM','SMB СНГ','Manager','Affordability','Basic'],
-          ['Zoho','Budget','Owner','Cost','Basic']
+          ['Salesforce','Enterprise','CTO, VP Sales','Сложная настройка','Зрелый'],
+          ['HubSpot','SMB','Маркетолог, CEO','Нужно быстро стартовать','Растущий'],
+          ['Pipedrive','Sales teams','Sales Manager','Долгий онбординг','Растущий'],
+          ['amoCRM','SMB СНГ','Руководитель','Локализация и цена','Развивающийся'],
+          ['Zoho','Малый бизнес','Владелец','Высокая цена лидеров','Базовый']
         ],
-        summary: ['SMB ищет простоту и быстрый ROI','Ключевые роли: Sales Manager, CTO, CFO','Jobs: "нужна CRM за день"']
+        summary: ['SMB ищет простоту и быстрый старт','Главная боль: долгий онбординг и высокая цена','Ключевые роли: Sales Manager, CEO, маркетолог']
       },
-      economics: {
-        headers: ['Компания','Модель','Цена','Ценность клиента (LTV)','Стоимость привлечения (CAC)','Срок окупаемости'],
+      pricing: {
+        headers: ['Компания','Модель','Стартовая цена','Бесплатный тариф','Пробный период','Скидки'],
         rows: [
-          ['Salesforce','SaaS','$165-500','$48K','$8K','6 мес'],
-          ['HubSpot','Freemium','Free-3200','$18K','$3K','6 мес'],
-          ['Pipedrive','SaaS','$14-99','$8.4K','$600','14 мес'],
-          ['amoCRM','SaaS','$15-60','$6K','$500','12 мес'],
-          ['Zoho','SaaS','$15-45','$5K','$400','12 мес']
+          ['Salesforce','SaaS','$165/мес','❌','30 дней','—'],
+          ['HubSpot','Freemium','$45/мес','✅ Free Forever','14 дней','30% годовая'],
+          ['Pipedrive','SaaS','$14/мес','❌','14 дней','17% годовая'],
+          ['amoCRM','SaaS','$15/мес','❌','14 дней','Партнёрские'],
+          ['Zoho','Freemium','$14/мес','✅ до 3 польз.','15 дней','20% годовая']
         ],
-        summary: ['SaaS модель доминирует','LTV/CAC ratio 8-14x','Freemium лучше retention']
+        summary: ['Freemium становится стандартом рынка','Пробный период 14-30 дней обязателен','Годовая скидка 17-30% увеличивает удержание']
       },
       channels: {
-        headers: ['Компания','Модель выхода (GTM)','Доп. каналы','Контент-стратегия','Бюджет'],
+        headers: ['Компания','Модель роста','Органика (SEO)','Платный трафик','Соцсети','Email-маркетинг'],
         rows: [
-          ['Salesforce','Enterprise','Partns','Whitepapers','High'],
-          ['HubSpot','PLG+Content','Email','Blog','Medium'],
-          ['Pipedrive','PLG','Affiliate','YouTube','Low'],
-          ['amoCRM','Direct','Content','Blog','Low'],
-          ['Zoho','PLG','Partner','Content','Low']
+          ['Salesforce','Прямые продажи (SLG)','30%','25%','10%','15%'],
+          ['HubSpot','Контент + PLG','45%','15%','20%','10%'],
+          ['Pipedrive','PLG + Affiliate','35%','20%','25%','5%'],
+          ['amoCRM','Прямые + Партнёры','40%','30%','20%','5%'],
+          ['Zoho','PLG + Partner','38%','18%','22%','8%']
         ],
-        summary: ['PLG — основной тренд','Content Marketing работает','Партнёрские программы эффективны']
+        summary: ['Органика — главный канал (30-45%)','PLG снижает стоимость привлечения','Соцсети растут как канал у всех игроков']
       },
       product: {
-        headers: ['Компания','Ключевые функции','Искусственный интеллект (AI)','Интеграции','Моб. приложение','Барьер переключения'],
+        headers: ['Компания','Ключевые функции','ИИ-автоматизация','Кол-во интеграций','Моб. приложение','Барьер переключения'],
         rows: [
-          ['Salesforce','All','Einstein','500+','Native','Complex'],
-          ['HubSpot','Sales+CRM','Yes','1000+','App','Medium'],
-          ['Pipedrive','Sales','Basic','50+','App','Low'],
-          ['amoCRM','Sales ops','No','30+','App','Low'],
-          ['Zoho','All','No','100+','App','Low']
+          ['Salesforce','Полный набор','✅ Einstein AI','500+','✅ Native','🔴 Высокий'],
+          ['HubSpot','CRM + Маркетинг','✅ Content AI','1000+','✅ App','🟡 Средний'],
+          ['Pipedrive','Воронки продаж','⚠️ Базовый','50+','✅ App','🟢 Низкий'],
+          ['amoCRM','Продажи + чат','❌ Нет','30+','✅ App','🟢 Низкий'],
+          ['Zoho','Полный набор','❌ Нет','100+','✅ App','🟢 Низкий']
         ],
-        summary: ['AI в CRM обязателен','Slack, Teams критичны','Mobile apps нужны']
+        summary: ['ИИ-автоматизация — обязательна в 2026','1000+ интеграций — стандарт для лидеров','Низкий барьер переключения — возможность для новых игроков']
       },
       reputation: {
-        headers: ['Компания','Рейтинг G2','Кол-во отзывов','Главные жалобы','Индекс лояльности (NPS)','PR активность'],
+        headers: ['Компания','Рейтинг G2','Кол-во отзывов','Главные жалобы','Оценка поддержки','PR активность'],
         rows: [
-          ['Salesforce','4.4/5','18K','Дорого','45','High'],
-          ['HubSpot','4.5/5','14K','Сложно','50','High'],
-          ['Pipedrive','4.3/5','8K','Ограничен','48','Med'],
-          ['amoCRM','4.2/5','5K','Поддержка','42','Low'],
-          ['Zoho','4.1/5','3K','UI/UX','40','Low']
+          ['Salesforce','4.4/5','18K','Высокая цена','4.2/5','🔴 Высокая'],
+          ['HubSpot','4.5/5','14K','Сложность','4.5/5','🔴 Высокая'],
+          ['Pipedrive','4.3/5','8K','Ограничен','4.3/5','🟡 Средняя'],
+          ['amoCRM','4.2/5','5K','Поддержка','3.9/5','🟢 Низкая'],
+          ['Zoho','4.1/5','3K','UI/UX','3.8/5','🟢 Низкая']
         ],
-        summary: ['G2 4.2-4.5 — стандарт','Жалобы: onboarding, цена, локализация','NPS 40-50']
+        summary: ['Рейтинг 4.2-4.5 — рыночный стандарт','Главные жалобы: цена, онбординг, поддержка','Оценка поддержки — ключевое отличие']
       },
-      macro: {
-        headers: ['Компания','GDPR','SOC2','Целевые регионы','Хранение данных','Сертификации'],
+      offers: {
+        headers: ['Компания','Лид-магнит','Первое предложение','Программа лояльности','Скорость ответа'],
         rows: [
-          ['Salesforce','Yes','Yes','EU, US','Global','ISO, FedRAMP'],
-          ['HubSpot','Yes','Yes','EU, US','Global','ISO, SOC2'],
-          ['Pipedrive','Yes','Yes','EU','Global','GDPR'],
-          ['amoCRM','Partial','No','RU','Local','GDPR'],
-          ['Zoho','Yes','Yes','Global','Local','ISO, GDPR']
+          ['Salesforce','Бесплатный аудит CRM','30 дней бесплатно','Salesforce+ сертификации','Чат 24/7'],
+          ['HubSpot','Бесплатный CRM навсегда','Онбординг за 1 час','HubSpot Academy','Чат + бот'],
+          ['Pipedrive','14 дней бесплатно','Онбординг-вебинар','Pipedrive Academy','Email 24 ч'],
+          ['amoCRM','Демо-доступ','Скидка 20% первый мес.','Партнёрская программа','Чат 1-2 ч'],
+          ['Zoho','Freemium 3 польз.','Настройка за 1 день','Zoho One Bundle','Email 48 ч']
         ],
-        summary: ['GDPR и SOC2 обязательны','Локальное хранение требуется','Compliance критичен']
+        summary: ['Бесплатный пробный период — основной крючок','Быстрый онбординг повышает конверсию','Программы лояльности удерживают клиентов']
       }
     };
 
@@ -450,19 +450,25 @@ td strong{color:var(--txt)}
       fetchAnalysis();
     }
 
-    async function fetchAnalysis() {
-      const steps = ['ls1','ls2','ls3','ls4'];
-      const delays = [800, 1800, 2800, 3800];
+    function setLoadingStep(idx, status) {
+      const ids = ['ls1','ls2','ls3','ls4'];
+      const el = document.getElementById(ids[idx]);
+      if (!el) return;
+      el.className = 'loading-step' + (status === 'done' ? ' done' : status === 'active' ? ' active' : '');
+      el.textContent = el.textContent.replace('⬜','').replace('✅','').replace('🔄','').trimStart();
+      if (status === 'done') el.textContent = '✅ ' + el.textContent;
+      else if (status === 'active') el.textContent = '🔄 ' + el.textContent;
+      else el.textContent = '⬜ ' + el.textContent;
+    }
 
-      delays.forEach((d, i) => {
-        setTimeout(() => {
-          steps.forEach((s, j) => {
-            const el = document.getElementById(s);
-            if (j < i) { el.textContent = el.textContent.replace('⬜','✅'); el.classList.add('done'); el.classList.remove('active'); }
-            else if (j === i) { el.textContent = el.textContent.replace('⬜','🔄'); el.classList.add('active'); }
-          });
-        }, d);
-      });
+    async function fetchAnalysis() {
+      // Шаг 1: поиск конкурентов
+      setLoadingStep(0, 'active');
+
+      // Фоновые таймеры — только если API занимает больше 10 секунд
+      const t1 = setTimeout(() => setLoadingStep(1, 'active'), 10000);
+      const t2 = setTimeout(() => setLoadingStep(2, 'active'), 20000);
+      const t3 = setTimeout(() => setLoadingStep(3, 'active'), 30000);
 
       try {
         const response = await fetch('/.netlify/functions/analyze', {
@@ -471,20 +477,30 @@ td strong{color:var(--txt)}
           body: JSON.stringify(state.data)
         });
 
+        // Ответ пришёл — шаг 2
+        clearTimeout(t1); setLoadingStep(0, 'done'); setLoadingStep(1, 'active');
+
         if (!response.ok) throw new Error('API error ' + response.status);
         const aiData = await response.json();
+
+        // Данные получены — шаги 3 и 4
+        clearTimeout(t2); clearTimeout(t3);
+        setLoadingStep(1, 'done'); setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
 
         if (aiData && aiData.market && aiData.strategy) {
           state.aiData = aiData;
         }
       } catch (e) {
-        // Fallback на захардкоженные данные
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+        [0,1,2,3].forEach(i => setLoadingStep(i, 'done'));
         state.aiData = null;
       }
 
-      document.getElementById('loadingScreen').classList.remove('active');
-      document.getElementById('analysisScreen').classList.add('active');
-      renderTabs();
+      setTimeout(() => {
+        document.getElementById('loadingScreen').classList.remove('active');
+        document.getElementById('analysisScreen').classList.add('active');
+        renderTabs();
+      }, 300);
     }
 
     function renderTabs() {
