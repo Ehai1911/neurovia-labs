@@ -246,6 +246,7 @@ td strong{color:var(--txt)}
       <div class="form-side">
         <div class="q-title" id="qTitle"></div>
         <div id="qAnswers"></div>
+        <div id="qError" style="color:#ff4d4d;font-size:13px;text-align:center;min-height:18px;margin-bottom:4px"></div>
         <div class="buttons-bottom">
           <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display:none">← НАЗАД</button>
           <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">ДАЛЬШЕ →</button>
@@ -336,9 +337,9 @@ td strong{color:var(--txt)}
       if(q.type === 'radio') {
         html = q.options.map(o => `<div><div class="q-option ${state.data[q.id] === o ? 'selected' : ''}" onclick="select('${q.id}', '${o}')">${o}</div>${o === 'Другое' && state.data[q.id] === o ? `<input type="text" class="q-input" style="margin-top:8px" placeholder="Укажи свой вариант..." value="${state.data[q.id + '_other'] || ''}" onchange="updateText('${q.id}_other', this.value)">` : ''}</div>`).join('');
       } else if(q.type === 'input') {
-        html = `<input type="text" class="q-input" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" onchange="updateText('${q.id}', this.value)">`;
+        html = `<input type="text" class="q-input" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" oninput="updateText('${q.id}', this.value)">`;
       } else if(q.type === 'textarea') {
-        html = `<textarea class="q-textarea" placeholder="${q.placeholder}" onchange="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
+        html = `<textarea class="q-textarea" placeholder="${q.placeholder}" oninput="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
       } else if(q.type === 'multi') {
         const selected = state.data[q.id] || [];
         html = q.options.map(o => `<div class="q-multi-option ${selected.includes(o) ? 'selected' : ''}" onclick="toggleMulti('${q.id}', '${o}')"><input type="checkbox" ${selected.includes(o) ? 'checked' : ''} style="pointer-events:none"><span>${o}</span></div>`).join('');
@@ -359,7 +360,11 @@ td strong{color:var(--txt)}
     function nextStep() {
       const q = QUESTIONS[state.step];
       const val = state.data[q.id];
-      if(!val || (Array.isArray(val) && val.length === 0)) {alert('Выбери ответ'); return;}
+      if(!val || (Array.isArray(val) && val.length === 0)) {
+        document.getElementById('qError').textContent = 'Выбери ответ чтобы продолжить';
+        return;
+      }
+      document.getElementById('qError').textContent = '';
       if(state.step < 6) {state.step++; renderQuestion();} else {startAnalysis();}
     }
 
@@ -487,16 +492,16 @@ td strong{color:var(--txt)}
         const q3html = renderStrategyQuarter('q3', s.q3 || {}, '🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ', '🟡');
         const q4html = renderStrategyQuarter('q4', s.q4 || {}, '🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ', '🟢');
 
-        const totalInvest = f.totalInvest || '$112K';
-        const arr = f.arr || '$1.5M';
-        const payback = f.payback || '6-8 месяцев';
-        const roi = f.roi || '1250%';
-        const q1i = f.q1invest || '$28K'; const q2i = f.q2invest || '$28K';
-        const q3i = f.q3invest || '$19K'; const q4i = f.q4invest || '$37K';
-        const q1r = f.q1revenue || '$50K'; const q2r = f.q2revenue || '$200K';
-        const q3r = f.q3revenue || '$450K'; const q4r = f.q4revenue || '$800K';
-        const ltvCac = f.ltvCac || '12x';
-        const gm = f.grossMargin || '80%+';
+        const totalInvest = f.totalInvest || '—';
+        const arr = f.arr || '—';
+        const payback = f.payback || '—';
+        const roi = f.roi || '—';
+        const q1i = f.q1invest || '—'; const q2i = f.q2invest || '—';
+        const q3i = f.q3invest || '—'; const q4i = f.q4invest || '—';
+        const q1r = f.q1revenue || '—'; const q2r = f.q2revenue || '—';
+        const q3r = f.q3revenue || '—'; const q4r = f.q4revenue || '—';
+        const ltvCac = f.ltvCac || '—';
+        const gm = f.grossMargin || '—';
 
         const html = `
           <h2 style="color:var(--acid);margin-bottom:16px;font-size:16px;font-family:'Syne',sans-serif">📋 СТРАТЕГИЯ ДЛЯ ${product.toUpperCase()}</h2>
@@ -654,26 +659,26 @@ td strong{color:var(--txt)}
 
     // ===== ПОМОЩНИК NOVA =====
     const HELPER_KNOWLEDGE = {
-      tam: {keywords: ['tam', 'рынок', 'объём', 'размер'], answer: 'TAM (Total Addressable Market) — общий размер рынка. В CRM рынок составляет ~$128B в год с ростом 13-30% в зависимости от сегмента.'},
-      cagr: {keywords: ['cagr', 'рост', 'годовой'], answer: 'CAGR — среднегодовой темп роста. TOP 5 CRM растут на 13-30% в год. Лучше всего растут PLG-компании (Pipedrive, amoCRM).'},
-      ltv: {keywords: ['ltv', 'жизненный цикл', 'стоимость клиента'], answer: 'LTV (Lifetime Value) — общая сумма прибыли от клиента за всё время. Для CRM обычно $5K-$48K в зависимости от сегмента.'},
-      cac: {keywords: ['cac', 'стоимость привлечения', 'цена', 'маркетинг'], answer: 'CAC (Customer Acquisition Cost) — сколько стоит привлечь одного клиента. Для CRM это $200-$8K. PLG компании имеют ниже CAC.'},
-      payback: {keywords: ['payback', 'окупаемость', 'когда окупится'], answer: 'Payback period — за сколько месяцев окупается CAC. Для хороших SaaS это 6-8 месяцев. Это означает, что через 6-8 месяцев прибыль покроет расходы на привлечение.'},
-      segment: {keywords: ['segment', 'сегмент', 'smb', 'enterprise', 'целевой'], answer: 'Разные сегменты требуют разные стратегии: SMB (5-500) хочет простоты, Enterprise — надежности и функций. Выбор сегмента определяет цену, посадку и GTM.'},
-      gtm: {keywords: ['gtm', 'доступ к рынку', 'стратегия входа', 'как продвигать'], answer: 'GTM (Go-To-Market) — стратегия выхода на рынок. Для CRM популярны: PLG (бесплатно + upgrade), контент-маркетинг (блоги, видео) и партнёрства.'},
-      plg: {keywords: ['plg', 'product-led', 'бесплатная версия'], answer: 'PLG (Product-Led Growth) — когда продукт сам себя продаёт через бесплатный триал. Работает лучше всего для SaaS. CAC становится на 50% ниже.'},
-      localization: {keywords: ['локализ', 'язык', 'страна', 'валюта'], answer: 'Локализация — адаптация под регион. Для СНГ: русский язык, рубли, местные платежи, налоги. Даёт +30% конверсии.'},
-      freemium: {keywords: ['freemium', 'бесплатный', 'платный'], answer: 'Freemium модель — бесплатный уровень с ограничениями (например, до 50 контактов), премиум за деньги. Увеличивает LTV на 20-30%.'},
-      soc2: {keywords: ['soc2', 'gdpr', 'безопасность', 'compliance', 'сертификат'], answer: 'SOC2 — сертификат безопасности. Обязателен для Enterprise продаж. SOC2 — для США, GDPR для Европы. Без них Enterprise не купит.'},
-      affiliate: {keywords: ['affiliate', 'партнёр', 'партнёрская программа'], answer: 'Affiliate Program — партнёры продвигают твой продукт за комиссию (20-30%). Даёт +40% трафика без прямых расходов на маркетинг.'},
-      ai: {keywords: ['ai', 'искусственный интеллект', 'машинное обучение'], answer: 'AI в CRM — автоматизация (распределение лидов, анализ писем, прогнозы). Необходим в 2026+ году для конкуренции. Интеграция стоит $15K-$25K.'},
-      mobile: {keywords: ['mobile', 'приложение', 'мобильное', 'ios', 'android'], answer: 'Мобильное приложение — iOS + Android для работы в дороге. Стоит $25-50K. Даёт +30-40% adoption среди sales teams.'},
-      q1: {keywords: ['q1', 'первый квартал', 'фундамент'], answer: 'Q1 стратегия: локализоваца ($5K), оптимизация для сегмента ($8K), AI ($15K). Результат: +40% конверсии, +$300K ARR.'},
-      q2: {keywords: ['q2', 'второй квартал', 'расширение'], answer: 'Q2 стратегия: PLG ($10K), контент-маркетинг ($8K/мес), интеграции Slack/Teams ($10K). Результат: -50% CAC, +100K трафика.'},
-      q3: {keywords: ['q3', 'третий квартал', 'монетизация'], answer: 'Q3 стратегия: Freemium план ($3K), SOC2 ($8K), Enterprise план ($2K). Результат: +60% free users, +$500K потенциал.'},
-      q4: {keywords: ['q4', 'четвёртый квартал', 'масштабирование'], answer: 'Q4 стратегия: Affiliate программа ($2K), мобильное приложение ($25K), PR ($10K). Результат: +40% adoption мобилки, +$150K ARR.'},
-      investment: {keywords: ['инвестиц', 'бюджет', 'сколько потребуется', 'расходы'], answer: 'Общие инвестиции в год 1: ~$112K. Распределение: Q1=$28K, Q2=$28K, Q3=$19K, Q4=$37K. Ожидаемый ARR: $1.5M (ROI 1250%).'},
-      roi: {keywords: ['roi', 'рентабельность', 'возврат'], answer: 'ROI год 1 = 1250% (инвестиции $112K → доход $1.5M). Payback за 6-8 месяцев. LTVCAC ratio: 12x (идеальная метрика).'}
+      tam: {keywords: ['tam', 'рынок', 'объём', 'размер'], answer: 'TAM (Total Addressable Market) — общий объём рынка, то есть максимальная выручка если занять 100% рынка. Чем больше TAM, тем шире потенциал для роста.'},
+      cagr: {keywords: ['cagr', 'рост', 'годовой'], answer: 'CAGR — среднегодовой темп роста рынка. Например, CAGR 20% означает, что рынок удваивается каждые ~3.5 года. Высокий CAGR = хорошее время для входа.'},
+      ltv: {keywords: ['ltv', 'жизненный цикл', 'стоимость клиента'], answer: 'LTV (Lifetime Value) — общая прибыль от одного клиента за всё время. Чем выше LTV, тем больше можно тратить на привлечение и оставаться прибыльным.'},
+      cac: {keywords: ['cac', 'стоимость привлечения', 'цена', 'маркетинг'], answer: 'CAC (Customer Acquisition Cost) — сколько стоит привлечь одного платящего клиента. Включает маркетинг, продажи и онбординг. Здоровое соотношение LTV:CAC = 3:1 и выше.'},
+      payback: {keywords: ['payback', 'окупаемость', 'когда окупится'], answer: 'Payback period — за сколько месяцев прибыль от клиента покрывает стоимость его привлечения. Хороший показатель для SaaS: 6-18 месяцев. Чем короче — тем быстрее можно реинвестировать.'},
+      segment: {keywords: ['segment', 'сегмент', 'smb', 'enterprise', 'целевой'], answer: 'Сегментация рынка — разделение аудитории на группы с похожими потребностями. SMB (малый бизнес) ценит простоту, Enterprise — надёжность и поддержку. Правильный сегмент определяет всю стратегию.'},
+      gtm: {keywords: ['gtm', 'доступ к рынку', 'стратегия входа', 'как продвигать'], answer: 'GTM (Go-To-Market) — план выхода продукта на рынок: кому продавать, по каким каналам, с каким позиционированием. Включает выбор каналов, ценообразование и первичный маркетинг.'},
+      plg: {keywords: ['plg', 'product-led', 'бесплатная версия'], answer: 'PLG (Product-Led Growth) — продукт сам приводит и конвертирует пользователей через бесплатный триал или freemium. Снижает CAC и ускоряет рост за счёт виральности и самостоятельного онбординга.'},
+      localization: {keywords: ['локализ', 'язык', 'страна', 'валюта'], answer: 'Локализация — адаптация продукта под конкретный рынок: язык, валюта, местные платёжные методы, регуляторные требования. Повышает конверсию и доверие в целевом регионе.'},
+      freemium: {keywords: ['freemium', 'бесплатный', 'платный'], answer: 'Freemium — бесплатный базовый план с ограничениями, платный — с расширенными возможностями. Снижает барьер входа, увеличивает базу пользователей и помогает конвертировать через продуктовый опыт.'},
+      soc2: {keywords: ['soc2', 'gdpr', 'безопасность', 'compliance', 'сертификат'], answer: 'SOC2 и GDPR — стандарты безопасности и защиты данных. SOC2 обязателен для продаж в США, GDPR — для Европы. Без сертификации крупные клиенты и Enterprise-сделки практически недостижимы.'},
+      affiliate: {keywords: ['affiliate', 'партнёр', 'партнёрская программа'], answer: 'Партнёрская программа — внешние партнёры продвигают твой продукт за комиссию (обычно 15-30% от продажи). Масштабирует привлечение без прямых маркетинговых затрат.'},
+      ai: {keywords: ['ai', 'искусственный интеллект', 'машинное обучение'], answer: 'AI-функции в продукте — автоматизация рутинных задач, умные рекомендации, предиктивная аналитика. В 2026 году AI стал ожидаемой базовой функцией, а не конкурентным преимуществом.'},
+      mobile: {keywords: ['mobile', 'приложение', 'мобильное', 'ios', 'android'], answer: 'Мобильное приложение — версия продукта для смартфонов. Важно для аудитории, работающей вне офиса. Требует отдельной разработки и поддержки, но значительно расширяет охват.'},
+      q1: {keywords: ['q1', 'первый квартал', 'фундамент'], answer: 'Q1 — квартал фундамента: фиксируются ключевые гипотезы, запускается MVP или первые итерации продукта, строится базовая воронка привлечения. Цель — первые платящие клиенты.'},
+      q2: {keywords: ['q2', 'второй квартал', 'расширение'], answer: 'Q2 — квартал расширения: масштабируются каналы привлечения, улучшается конверсия на основе данных Q1, добавляются интеграции и функции для удержания клиентов.'},
+      q3: {keywords: ['q3', 'третий квартал', 'монетизация'], answer: 'Q3 — квартал монетизации: оптимизируется ценообразование, тестируются новые тарифные планы, строится работа с базой для увеличения LTV и снижения churn.'},
+      q4: {keywords: ['q4', 'четвёртый квартал', 'масштабирование'], answer: 'Q4 — квартал масштабирования: проверенные каналы получают больше бюджета, строится команда, готовится план на следующий год с учётом всех данных.'},
+      investment: {keywords: ['инвестиц', 'бюджет', 'сколько потребуется', 'расходы'], answer: 'Инвестиции зависят от сферы, команды и каналов продвижения. CIPHER анализирует именно твой рынок и формирует реалистичные цифры — смотри финансовую модель в стратегии.'},
+      roi: {keywords: ['roi', 'рентабельность', 'возврат'], answer: 'ROI (Return on Investment) — возврат на вложения. Считается как (доход − затраты) / затраты × 100%. Для роста важен не только высокий ROI, но и скорость возврата (payback period).'}
     };
 
     function toggleHelper() {
@@ -762,22 +767,22 @@ td strong{color:var(--txt)}
       // Контекстные ответы
       if(q.includes('что') || q.includes('как') || q.includes('зачем') || q.includes('почему')) {
         if(q.includes('лучший') || q.includes('лидер')) {
-          return 'Лучшие компании для обучения: 🥇 HubSpot (простота + growth), 🥈 Salesforce (масштаб), 🥉 Pipedrive (PLG модель). Учись у каждого своему!';
+          return 'Лидеры рынка отличаются чётким позиционированием, сильным PLG или Sales-motion, и глубоким пониманием своего сегмента. CIPHER показывает, что делают лидеры именно в твоей нише.';
         }
         if(q.includes('стартап') || q.includes('новая') || q.includes('начать')) {
-          return 'Начни с: 1️⃣ Локализации под свой регион, 2️⃣ PLG триала, 3️⃣ Контента. Это даст первые 100 клиентов за 3 месяца.';
+          return 'На старте важно: 1️⃣ Чётко определить целевой сегмент, 2️⃣ Выбрать один главный канал привлечения, 3️⃣ Быстро проверить гипотезы на реальных пользователях. Не пытайся охватить всё сразу.';
         }
         if(q.includes('конкур')) {
-          return 'TOP 5 конкурентов в CRM: Salesforce (Enterprise), HubSpot (SMB), Pipedrive (Sales-focused), amoCRM (СНГ), Zoho (Budget). Каждый занимает свою нишу.';
+          return 'Конкуренты показаны в таблице анализа. CIPHER собирает актуальные данные по твоему рынку — смотри вкладки "Конкуренты" и "Маркетинг и каналы" для деталей.';
         }
       }
 
       if(q.includes('сколько') || q.includes('цена') || q.includes('стоит')) {
-        return 'Примерные цены CRM в 2026: Salesforce $165-500/мес, HubSpot Free-$3200, Pipedrive $14-99, amoCRM $15-60, Zoho $15-45. Выбор зависит от сегмента.';
+        return 'Конкретные цифры зависят от твоего продукта и рынка. Финансовую модель с инвестициями и ожидаемым доходом CIPHER формирует в разделе "Стратегия" после анализа.';
       }
 
       if(q.includes('помощь') || q.includes('вопрос') || q.includes('не ясно')) {
-        return 'Задай вопрос про: TAM, CAC, LTV, CAGR, стратегию по кварталам (Q1-Q4), локализацию, PLG, freemium, SOC2, мобильные приложения, инвестиции. Я помогу!';
+        return 'Задай вопрос про: TAM, CAC, LTV, CAGR, стратегию по кварталам (Q1-Q4), локализацию, PLG, freemium, SOC2, мобильные приложения, инвестиции, ROI. Я помогу!';
       }
 
       return '🤔 Интересный вопрос! К сожалению, я не уверен в ответе. Попробуй спросить про метрики (TAM, CAC, LTV), стратегию (Q1-Q4) или технологии (AI, Mobile, Интеграции).';
