@@ -3,831 +3,845 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CIPHER v3</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Анализ конкурентов · Neurovia Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#070910;--bg2:#0c0f1a;--bg3:#11152200;
-  --line2:#ffffff0f;
-  --acid:#4F8EF7;--acid-d:rgba(79,142,247,0.10);--acid-dd:rgba(79,142,247,0.07);
-  --sky:#818CF8;
-  --txt:#d8ddf0;--txt2:#6b7090;--txt3:#353850;
+  --bg:#0a0e1a;
+  --surface:#0f1628;
+  --surface2:#141d35;
+  --surface3:#1a2540;
+  --border:#1e2d4a;
+  --border2:#243558;
+  --text:#e2e8f5;
+  --text2:#a8b4cc;
+  --muted:#5b6b8a;
+  --gold:#d4a843;
+  --gold-l:#e8c87a;
+  --gold-d:#b08830;
+  --gold-glow:rgba(212,168,67,.1);
+  --gold-border:rgba(212,168,67,.22);
+  --green:#34d399;
+  --red:#f87171;
+  --blue:#60a5fa;
 }
 
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Manrope',sans-serif;overflow:hidden}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif}
+#root,body{min-height:100vh}
 
-.app{position:relative;height:100vh;display:flex;flex-direction:column}
+/* ===== QUESTIONS SCREEN ===== */
+#questionsScreen{display:none;min-height:100vh}
+#questionsScreen.active{display:flex}
 
-.hdr{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line2);background:rgba(8,10,16,.95);gap:12px}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:4px;color:var(--acid)}
+/* LEFT PANEL */
+.lp{
+  width:280px;flex-shrink:0;
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:32px 28px;display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow:hidden
+}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:40px}
+.brand-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--gold-glow);border:1px solid var(--gold-border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--gold)
+}
+.brand-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.04em}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
 
-.screen{display:none;flex:1;overflow:hidden}
-.screen.active{display:flex}
+.lp-steps{flex:1;overflow:hidden}
+.si{display:flex;align-items:flex-start;gap:12px;padding:10px 0;position:relative;cursor:default}
+.si:not(:last-child)::after{content:'';position:absolute;left:12px;top:36px;bottom:0;width:1px;background:var(--border)}
+.si.done::after,.si.active::after{background:var(--gold-border)}
+.si-dot{
+  width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border2);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:10px;color:var(--muted);font-weight:600;transition:all .3s
+}
+.si.done   .si-dot{background:rgba(52,211,153,.1);border-color:var(--green);color:var(--green)}
+.si.active .si-dot{background:var(--gold-glow);border-color:var(--gold);color:var(--gold)}
+.si-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1px}
+.si-name{font-size:12px;color:var(--text2);font-weight:500;line-height:1.3}
+.si.active .si-name{color:var(--text)}
 
-#questionsScreen{flex-direction:row;gap:0}
+.prog-wrap{margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:7px}
+.prog-track{height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:2px;transition:width .5s ease}
 
-.nova-side{width:320px;background:rgba(8,10,16,.7);border-right:1px solid var(--line2);display:flex;flex-direction:column;padding:20px;overflow-y:auto;flex-shrink:0}
-.nova-side::-webkit-scrollbar{width:6px}
-.nova-side::-webkit-scrollbar-track{background:var(--bg2)}
-.nova-side::-webkit-scrollbar-thumb{background:var(--acid);border-radius:3px}
+.lp-hint{margin-top:20px;font-size:11px;color:var(--muted);line-height:1.6;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
 
-.nova-avatar{width:100px;height:100px;border-radius:20px;background:linear-gradient(135deg,#0c1535,#111d48,#0f1a40);border:1px solid rgba(79,142,247,.2);display:grid;place-items:center;margin:0 auto 20px;position:relative;overflow:hidden}
-.nova-avatar::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(79,142,247,.15),transparent 60%)}
-.nova-n{font-family:'Syne',sans-serif;font-weight:800;font-size:52px;line-height:1;background:linear-gradient(135deg,#4F8EF7,#818CF8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1}
+/* RIGHT PANEL (questions) */
+.rp{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.rp::-webkit-scrollbar{width:5px}
+.rp::-webkit-scrollbar-track{background:var(--bg)}
+.rp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
-.nova-hint{font-size:11px;color:var(--txt2);line-height:1.6;text-align:center;margin-bottom:20px}
+.ri{flex:1;padding:52px 64px;max-width:800px}
 
-.step-counter{text-align:center;font-size:10px;color:var(--txt3);margin-bottom:10px}
+.step-badge{
+  display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--gold);background:var(--gold-glow);border:1px solid var(--gold-border);
+  border-radius:20px;padding:3px 11px;margin-bottom:14px
+}
+.q-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.2}
+.q-hint{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:30px}
 
-.step-progress{height:2px;background:var(--line2);border-radius:1px;overflow:hidden}
-.step-progress-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--acid));transition:width .4s}
+.fi{
+  width:100%;max-width:600px;padding:11px 14px;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:8px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s
+}
+.fi::placeholder{color:var(--muted)}
+.fi:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+textarea.fi{resize:vertical;min-height:100px;line-height:1.5;max-width:600px}
 
-.form-side{flex:1;display:flex;flex-direction:column;padding:30px;overflow-y:auto}
-.form-side::-webkit-scrollbar{width:6px}
-.form-side::-webkit-scrollbar-track{background:var(--bg2)}
-.form-side::-webkit-scrollbar-thumb{background:var(--acid);border-radius:3px}
+.q-options{display:flex;flex-direction:column;gap:9px;max-width:600px}
+.q-option{
+  padding:12px 15px;background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:9px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--text2);text-align:left
+}
+.q-option:hover{border-color:var(--gold-border);background:var(--surface3)}
+.q-option.selected{border-color:var(--gold);background:var(--gold-glow);color:var(--gold);font-weight:600}
 
-.q-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--acid);margin-bottom:20px;max-width:600px}
+.q-multi-grid{display:flex;flex-wrap:wrap;gap:8px;max-width:600px}
+.tbtn{
+  padding:7px 14px;border:1.5px solid var(--border2);border-radius:20px;
+  background:var(--surface2);color:var(--text2);font-size:12px;
+  cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif
+}
+.tbtn:hover{border-color:var(--gold-border);color:var(--gold-l)}
+.tbtn.selected{border-color:var(--gold);background:var(--gold-glow);color:var(--gold)}
 
-.q-options{display:flex;flex-direction:column;gap:12px;max-width:600px}
+.err-msg{font-size:11px;color:var(--red);margin-top:6px;min-height:16px}
 
-.q-option{padding:12px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;cursor:pointer;transition:.2s;font-size:12px;color:var(--txt)}
-.q-option:hover{background:var(--bg3);border-color:var(--sky)}
-.q-option.selected{background:var(--acid-d);border-color:var(--acid);color:var(--acid);font-weight:600}
+.nav-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:36px;padding-top:24px;border-top:1px solid var(--border);gap:12px
+}
+.btn-back{
+  padding:10px 20px;border:1.5px solid var(--border2);border-radius:8px;
+  background:none;color:var(--text2);font-size:13px;cursor:pointer;
+  transition:all .2s;font-family:'Inter',sans-serif
+}
+.btn-back:hover{border-color:var(--border);color:var(--text)}
+.btn-next{
+  padding:11px 28px;background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;border-radius:8px;color:#0a0e1a;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .2s;font-family:'Syne',sans-serif;letter-spacing:.03em
+}
+.btn-next:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,168,67,.3)}
 
-.q-input{padding:14px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-family:'Manrope',sans-serif;font-size:14px;outline:none;width:100%;max-width:640px}
-.q-input:focus{border-color:var(--sky);background:rgba(79,142,247,.03)}
+/* ===== LOADING SCREEN ===== */
+#loadingScreen{
+  display:none;min-height:100vh;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:60px 40px;background:var(--bg)
+}
+#loadingScreen.active{display:flex}
 
-.q-textarea{padding:14px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);font-family:'Manrope',sans-serif;font-size:14px;outline:none;resize:none;min-height:120px;width:100%;max-width:640px}
-.q-textarea:focus{border-color:var(--sky);background:rgba(79,142,247,.03)}
-
-.q-multi-option{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;cursor:pointer;transition:.2s;font-size:12px}
-.q-multi-option:hover{background:var(--bg3)}
-.q-multi-option.selected{background:var(--acid-d);border-color:var(--acid)}
-.q-multi-option input{cursor:pointer}
-
-.buttons-bottom{display:flex;gap:10px;margin-top:auto;padding-top:20px;border-top:1px solid var(--line2)}
-
-.btn{padding:10px 20px;border:none;border-radius:6px;font-weight:600;font-size:11px;cursor:pointer;transition:.2s}
-.btn-secondary{background:var(--bg2);color:var(--txt);border:1px solid var(--line2)}
-.btn-secondary:hover{background:var(--bg3)}
-.btn-primary{background:linear-gradient(135deg,var(--acid) 0%,var(--sky) 100%);color:#fff;flex:1}
-.btn-primary:hover{box-shadow:0 8px 25px rgba(79,142,247,.35);transform:translateY(-1px)}
-
-#analysisScreen{flex-direction:column;gap:0}
-
-.tabs-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:12px;border-bottom:2px solid var(--line2);background:rgba(8,10,16,.7);flex-shrink:0}
-
-.tab{padding:10px 8px;border:none;background:var(--bg2);color:var(--txt3);cursor:pointer;font-size:11px;font-weight:600;transition:.2s;border-radius:6px;border:1px solid var(--line2);font-family:'Syne',sans-serif;text-align:center}
-.tab:hover{background:var(--bg3);border-color:var(--sky)}
-.tab.on{color:var(--acid);background:var(--acid-dd);border-color:var(--acid)}
-
-.content{flex:1;overflow-y:auto;padding:20px}
-.content::-webkit-scrollbar{width:6px}
-.content::-webkit-scrollbar-track{background:var(--bg2)}
-.content::-webkit-scrollbar-thumb{background:var(--acid);border-radius:3px}
-
-.table-wrapper{overflow-x:auto;margin-bottom:16px}
-table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px}
-thead{background:rgba(79,142,247,.08);border-bottom:2px solid rgba(79,142,247,.2)}
-th{padding:10px;text-align:left;font-weight:600;color:var(--acid);font-size:9px}
-td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--txt2)}
-tbody tr:hover{background:rgba(79,142,247,.04)}
-td strong{color:var(--txt)}
-
-.summary-box{background:var(--bg2);border:1px solid var(--line2);border-radius:8px;padding:12px;margin-bottom:14px}
-.summary-title{font-size:11px;font-weight:600;color:var(--acid);margin-bottom:8px}
-.summary-item{font-size:10px;color:var(--txt2);line-height:1.5;margin-bottom:6px}
-
-.rec-item{background:rgba(184,255,60,.05);border-left:2px solid var(--acid);border-radius:6px;padding:10px;margin-bottom:10px}
-.rec-pri{font-size:9px;font-weight:600;margin-bottom:2px}
-.rec-title{font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px}
-.rec-details{font-size:9px;color:var(--sky)}
-
-.btn-analysis{width:100%;padding:10px;margin-top:12px;background:linear-gradient(135deg,var(--acid) 0%,var(--sky) 100%);color:#fff;border:none;border-radius:6px;font-weight:600;font-size:11px;cursor:pointer}
-
-#loadingScreen{flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.loading-spinner{width:56px;height:56px;border:3px solid var(--line2);border-top:3px solid var(--acid);border-radius:50%;animation:spin 1s linear infinite}
-.loading-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--acid);letter-spacing:2px}
-.loading-sub{font-size:11px;color:var(--txt2);text-align:center;max-width:300px;line-height:1.6}
-.loading-steps{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.loading-step{font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:8px}
-.loading-step.done{color:var(--acid)}
-.loading-step.active{color:var(--sky)}
+.spin-ring{
+  width:56px;height:56px;border:2px solid var(--border2);
+  border-top-color:var(--gold);border-radius:50%;
+  animation:spin .85s linear infinite;margin-bottom:24px
+}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:100;overflow-y:auto;padding:20px}
+.load-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center}
+.load-sub{font-size:13px;color:var(--text2);margin-bottom:32px;text-align:center;max-width:380px;line-height:1.5}
+.load-steps{display:flex;flex-direction:column;gap:0;width:100%;max-width:360px}
+.lst{display:flex;align-items:center;gap:11px;padding:8px 0;font-size:13px;color:var(--muted);transition:color .3s}
+.lst.done{color:var(--green)}
+.lst.active{color:var(--text);font-weight:500}
+.lst-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .3s}
+.lst.done   .lst-dot{background:var(--green)}
+.lst.active .lst-dot{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+
+/* ===== ANALYSIS SCREEN ===== */
+#analysisScreen{display:none;min-height:100vh;flex-direction:column}
+#analysisScreen.active{display:flex}
+
+.an-header{
+  padding:20px 32px 0;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0
+}
+.an-brand{display:flex;align-items:center;gap:9px;margin-bottom:16px}
+.an-brand-icon{
+  width:28px;height:28px;border-radius:7px;background:var(--gold-glow);
+  border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--gold)
+}
+.an-brand-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--gold)}
+.an-product{font-size:12px;color:var(--muted);margin-left:auto}
+
+.tabs-wrap{display:flex;overflow-x:auto;gap:0}
+.tabs-wrap::-webkit-scrollbar{height:0}
+.tab{
+  padding:10px 16px;border:none;background:none;color:var(--muted);
+  font-size:12px;font-weight:500;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:all .2s;display:flex;align-items:center;gap:5px;
+  font-family:'Inter',sans-serif;white-space:nowrap
+}
+.tab:hover{color:var(--text2)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+
+.content{flex:1;overflow-y:auto;padding:24px 32px 40px}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-track{background:var(--bg)}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* Tables */
+.table-wrapper{overflow-x:auto;margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--surface)}
+th{padding:11px 13px;text-align:left;font-weight:600;color:var(--gold);font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border2)}
+td{padding:10px 13px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td:first-child{color:var(--text);font-weight:500}
+
+/* Summary */
+.summary-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.summary-title{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:9px}
+.summary-item{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:5px}
+
+/* Best company highlight */
+.best-company{
+  background:rgba(212,168,67,.06);border:1px solid var(--gold-border);
+  border-radius:9px;padding:11px 14px;margin-bottom:16px;
+  font-size:12px;color:var(--text2);line-height:1.5
+}
+.best-company strong{color:var(--gold)}
+
+/* Rec items */
+.rec-item{border-left:2px solid var(--gold);border-radius:6px;padding:10px 13px;margin-bottom:9px;background:var(--surface2)}
+.rec-pri{font-size:9px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.rec-title{font-size:12px;color:var(--text);margin-bottom:3px}
+
+/* Strategy */
+.q-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.q-card-head{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.q-card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.q-card-goal{font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.q-card-goal strong{color:var(--gold)}
+.q-action{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.q-action:last-of-type{border-bottom:none}
+.q-action-title{font-size:12px;color:var(--text);font-weight:500;flex:1}
+.q-action-budget{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);white-space:nowrap}
+.q-action-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.q-metrics{margin-top:10px;padding:9px 11px;background:var(--surface2);border-radius:7px;font-size:11px;color:var(--text2)}
+.q-metrics span{color:var(--blue)}
+
+/* Finance strip */
+.fin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.fin-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.fin-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:7px}
+.fin-val{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--gold);margin-bottom:2px}
+.fin-sub{font-size:10px;color:var(--muted)}
+
+/* Analysis action button */
+.btn-analysis{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;margin-top:12px;
+  background:none;border:1.5px solid var(--border2);border-radius:7px;
+  color:var(--text2);font-size:12px;cursor:pointer;transition:all .2s;
+  font-family:'Inter',sans-serif
+}
+.btn-analysis:hover{border-color:var(--gold-border);color:var(--gold)}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;overflow-y:auto;padding:24px}
 .modal.open{display:block}
-.modal-content{background:var(--bg);border:1px solid var(--line2);border-radius:8px;max-width:700px;margin:0 auto;padding:20px;position:relative}
-.modal-close{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--txt3);font-size:16px;cursor:pointer}
-.modal-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--acid);margin-bottom:12px}
-.modal-text{font-size:10px;color:var(--txt2);line-height:1.6}
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:740px;margin:0 auto;padding:24px;position:relative}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.modal-text{font-size:12px;color:var(--text2);line-height:1.6}
 
-@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(79,142,247,.5),0 4px 20px rgba(79,142,247,.3)}70%{box-shadow:0 0 0 14px rgba(79,142,247,0),0 4px 20px rgba(79,142,247,.2)}100%{box-shadow:0 0 0 0 rgba(79,142,247,0),0 4px 20px rgba(79,142,247,.3)}}
-.helper-btn{position:fixed;bottom:24px;right:24px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#3a7af0 0%,#6d5ef5 100%);border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:22px;cursor:pointer;animation:pulse-ring 2.5s ease-out infinite;transition:.3s;z-index:99}
-.helper-btn:hover{transform:scale(1.08)}
+/* Helper */
+@keyframes pulse-ring{
+  0%{box-shadow:0 0 0 0 rgba(212,168,67,.4),0 4px 16px rgba(212,168,67,.2)}
+  70%{box-shadow:0 0 0 12px rgba(212,168,67,0),0 4px 16px rgba(212,168,67,.15)}
+  100%{box-shadow:0 0 0 0 rgba(212,168,67,0),0 4px 16px rgba(212,168,67,.2)}
+}
+.helper-btn{
+  position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-d),var(--gold));
+  border:none;color:#0a0e1a;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;
+  cursor:pointer;animation:pulse-ring 2.5s ease-out infinite;transition:.25s;z-index:99
+}
+.helper-btn:hover{transform:scale(1.07)}
 
-.helper-chat{display:none;position:fixed;bottom:80px;right:20px;width:340px;height:500px;background:var(--bg2);border:1px solid var(--line2);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:98;flex-direction:column;overflow:hidden}
+.helper-chat{
+  display:none;position:fixed;bottom:92px;right:20px;width:340px;height:480px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:98;flex-direction:column;overflow:hidden
+}
 .helper-chat.open{display:flex}
-
-.helper-header{padding:16px;border-bottom:1px solid var(--line2);background:rgba(184,255,60,.05);display:flex;align-items:center;justify-content:space-between}
-.helper-title{font-weight:800;color:var(--acid);font-size:13px;font-family:'Syne',sans-serif}
-.helper-close{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:18px}
-
-.helper-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.helper-header{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:space-between
+}
+.helper-title{font-weight:700;color:var(--gold);font-size:13px;font-family:'Syne',sans-serif}
+.helper-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:color .2s}
+.helper-close:hover{color:var(--text)}
+.helper-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px}
 .helper-messages::-webkit-scrollbar{width:4px}
-.helper-messages::-webkit-scrollbar-track{background:var(--bg)}
-.helper-messages::-webkit-scrollbar-thumb{background:var(--acid);border-radius:2px}
-
-.msg{display:flex;gap:8px;font-size:10px;line-height:1.4}
-.msg-bot{justify-content:flex-start}
-.msg-avatar{width:24px;height:24px;border-radius:6px;background:rgba(184,255,60,.1);display:grid;place-items:center;flex-shrink:0;font-size:12px}
-.msg-text{background:rgba(65,200,255,.1);border-left:2px solid var(--sky);padding:8px;border-radius:6px;color:var(--txt);flex:1}
-
-.helper-input{padding:12px;border-top:1px solid var(--line2);display:flex;gap:8px}
-.helper-input input{flex:1;background:var(--bg);border:1px solid var(--line2);border-radius:4px;color:var(--txt);padding:8px;font-size:10px;outline:none}
-.helper-input input:focus{border-color:var(--sky)}
-.helper-input button{background:var(--acid);color:var(--bg);border:none;border-radius:4px;padding:8px 12px;font-weight:600;font-size:10px;cursor:pointer;transition:.2s}
-.helper-input button:hover{background:#a8e814}
-
-@media(max-width:1024px){
-  .tabs-bar{grid-template-columns:repeat(2,1fr)}
+.helper-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg{display:flex;gap:7px;font-size:11px;line-height:1.5}
+.msg-avatar{
+  width:26px;height:26px;border-radius:7px;background:var(--gold-glow);
+  border:1px solid var(--gold-border);display:grid;place-items:center;flex-shrink:0;
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--gold)
 }
+.msg-text{background:var(--surface2);border:1px solid var(--border);padding:8px 10px;border-radius:8px;color:var(--text);flex:1}
+.helper-input{padding:10px;border-top:1px solid var(--border);display:flex;gap:7px}
+.helper-input input{
+  flex:1;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text);padding:8px 10px;font-size:11px;outline:none;
+  font-family:'Inter',sans-serif
+}
+.helper-input input:focus{border-color:var(--gold)}
+.helper-input button{
+  background:var(--gold);color:#0a0e1a;border:none;border-radius:6px;
+  padding:8px 13px;font-weight:700;font-size:10px;cursor:pointer;
+  transition:.2s;font-family:'Syne',sans-serif;letter-spacing:.04em
+}
+.helper-input button:hover{background:var(--gold-l)}
 
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== RESPONSIVE ===== */
 @media(max-width:900px){
-  #questionsScreen{flex-direction:column}
-  .nova-side{width:100%;max-height:120px}
-  .form-side{padding:20px}
-  .q-title{font-size:20px;margin-bottom:16px}
-  table{font-size:9px}
-  th{padding:8px;font-size:8px}
-  td{padding:6px 8px}
-  .hdr{padding:12px 14px}
-  .logo{font-size:14px}
+  .lp{width:240px;padding:24px 20px}
+  .ri{padding:36px 36px}
+  .fin-grid{grid-template-columns:repeat(2,1fr)}
 }
 
-@media(max-width:640px){
-  .app{height:100vh}
-  .hdr{padding:10px 12px;gap:8px}
-  .logo{font-size:13px;letter-spacing:2px}
-  
+@media(max-width:768px){
   #questionsScreen{flex-direction:column}
-  .nova-side{width:100%;max-height:100px;padding:15px}
-  .nova-avatar{width:50px;height:50px;margin:0 auto 8px}.nova-n{font-size:28px}
-  .nova-hint{font-size:10px;margin-bottom:12px}
-  .step-counter{font-size:9px;margin-bottom:8px}
-  
-  .form-side{padding:16px;flex:1;overflow-y:auto}
-  .q-title{font-size:16px;margin-bottom:12px}
-  .q-options{gap:8px}
-  .q-option{padding:10px 12px;font-size:11px}
-  .q-input,.q-textarea{font-size:11px;padding:10px 12px;max-width:100%}
-  .q-textarea{min-height:80px}
-  .q-multi-option{padding:8px 10px;font-size:11px;gap:6px}
-  
-  .buttons-bottom{flex-direction:column;gap:8px;margin-top:12px;padding-top:12px}
-  .btn{padding:10px 16px;font-size:10px;border-radius:4px}
-  .btn-primary{width:100%}
-  
-  .tabs-bar{grid-template-columns:repeat(2,1fr);gap:3px;padding:8px;border-bottom:1px solid var(--line2)}
-  .tab{padding:8px 6px;font-size:9px;border-radius:4px}
-  
-  .content{padding:12px;font-size:9px;overflow-y:auto}
-  h2{font-size:12px !important}
-  
-  table{font-size:8px !important}
-  th{padding:6px !important;font-size:7px !important}
-  td{padding:4px 6px !important;font-size:8px !important}
-  .table-wrapper{overflow-x:auto;margin-bottom:10px}
-  
-  .summary-box{padding:10px;margin-bottom:10px;border-radius:6px}
-  .summary-title{font-size:10px;margin-bottom:6px}
-  .summary-item{font-size:9px;margin-bottom:4px;line-height:1.4}
-  
-  .rec-item{padding:8px;margin-bottom:8px}
-  .rec-pri{font-size:8px;margin-bottom:2px}
-  .rec-title{font-size:9px;margin-bottom:2px}
-  .rec-details{font-size:8px}
-  
-  .btn-analysis{padding:8px;font-size:10px;margin-top:10px}
-  
-  .modal{padding:10px}
-  .modal-content{padding:16px;border-radius:6px;max-width:95%}
-  .modal-close{font-size:14px;top:8px;right:8px}
-  .modal-title{font-size:12px;margin-bottom:10px}
-  .modal-text{font-size:9px}
+  .lp{
+    width:100%;height:auto;position:static;
+    flex-direction:row;align-items:center;padding:14px 20px;
+    border-right:none;border-bottom:1px solid var(--border)
+  }
+  .brand{margin-bottom:0;flex-shrink:0}
+  .lp-steps{display:none}
+  .prog-wrap{
+    flex:1;margin:0;padding:0;border-top:none;
+    display:flex;align-items:center;gap:10px;margin-left:16px
+  }
+  .prog-row{flex-direction:column;gap:1px}
+  .prog-track{width:120px}
+  .lp-hint{display:none}
+  .ri{padding:24px 20px}
+  .q-title{font-size:20px}
+  .an-header{padding:14px 16px 0}
+  .content{padding:16px}
+  .fin-grid{grid-template-columns:repeat(2,1fr)}
+  .tabs-wrap{padding:0 4px}
 }
 
 @media(max-width:480px){
-  .logo{font-size:12px;letter-spacing:1px}
-  .q-title{font-size:14px;margin-bottom:10px}
-  .q-option{font-size:10px}
-  .tabs-bar{grid-template-columns:1fr;gap:2px;padding:6px}
-  .tab{padding:6px;font-size:8px}
-  .content{padding:10px}
-  table{font-size:7px !important}
-  th{padding:4px !important;font-size:6px !important}
-  td{padding:3px 4px !important}
+  .ri{padding:20px 16px}
+  .q-title{font-size:17px}
+  .fin-grid{grid-template-columns:1fr 1fr}
+  .fin-val{font-size:18px}
+  table{font-size:11px}
+  th{font-size:9px;padding:9px 10px}
+  td{padding:8px 10px;font-size:11px}
 }
 </style>
 </head>
 <body>
-  <div class="app">
-    <div class="hdr">
-      <div class="logo">NEUROVIA LABS</div>
-    </div>
 
-    <div id="questionsScreen" class="screen active">
-      <div class="nova-side">
-        <div class="nova-avatar"><div class="nova-n">N</div></div>
-        <div class="nova-hint" id="novaHint">Эта информация помогает найти конкурентов</div>
-        <div class="step-counter" id="stepCounter">1 из 7</div>
-        <div class="step-progress"><div class="step-progress-fill" id="stepProgress"></div></div>
+<!-- QUESTIONS SCREEN -->
+<div id="questionsScreen" class="screen active">
+  <div class="lp">
+    <div class="brand">
+      <div class="brand-icon">N</div>
+      <div>
+        <div class="brand-name">NEUROVIA LABS</div>
+        <div class="brand-sub">Competitor Intel</div>
       </div>
+    </div>
+    <div class="lp-steps" id="lpSteps"></div>
+    <div class="prog-wrap">
+      <div class="prog-row">
+        <span>Прогресс</span>
+        <span id="stepCounter">1 / 7</span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="stepProgress" style="width:14%"></div></div>
+    </div>
+    <div class="lp-hint" id="novaHint"></div>
+  </div>
 
-      <div class="form-side">
-        <div class="q-title" id="qTitle"></div>
-        <div id="qAnswers"></div>
-        <div id="qError" style="color:#ff4d4d;font-size:13px;text-align:center;min-height:18px;margin-bottom:4px"></div>
-        <div class="buttons-bottom">
-          <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display:none">← НАЗАД</button>
-          <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">ДАЛЬШЕ →</button>
+  <div class="rp">
+    <div class="ri">
+      <div class="step-badge" id="stepBadge">Шаг 1 из 7</div>
+      <div class="q-title" id="qTitle"></div>
+      <div class="q-hint" id="qHintText"></div>
+      <div id="qAnswers"></div>
+      <div class="err-msg" id="qError"></div>
+      <div class="nav-row">
+        <button class="btn-back" id="prevBtn" onclick="prevStep()" style="display:none">← Назад</button>
+        <button class="btn-next" id="nextBtn" onclick="nextStep()">ДАЛЬШЕ →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="loadingScreen" class="screen">
+  <div class="spin-ring"></div>
+  <div class="load-title">Анализируем рынок</div>
+  <div class="load-sub">Собираем данные по конкурентам, метрикам и стратегии...</div>
+  <div class="load-steps">
+    <div class="lst" id="ls1"><div class="lst-dot"></div>Поиск конкурентов</div>
+    <div class="lst" id="ls2"><div class="lst-dot"></div>Анализ рынка</div>
+    <div class="lst" id="ls3"><div class="lst-dot"></div>Финансовые метрики</div>
+    <div class="lst" id="ls4"><div class="lst-dot"></div>Формирование отчёта</div>
+  </div>
+</div>
+
+<!-- ANALYSIS SCREEN -->
+<div id="analysisScreen" class="screen">
+  <div class="an-header">
+    <div class="an-brand">
+      <div class="an-brand-icon">N</div>
+      <div class="an-brand-name">NEUROVIA LABS</div>
+      <div class="an-product" id="anProduct"></div>
+    </div>
+    <div class="tabs-wrap" id="tabsBar"></div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-text" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- HELPER -->
+<button class="helper-btn" onclick="toggleHelper()" title="NOVA — Ассистент">N</button>
+<div class="helper-chat" id="helperChat">
+  <div class="helper-header">
+    <span class="helper-title">NOVA · Ассистент</span>
+    <button class="helper-close" onclick="toggleHelper()">✕</button>
+  </div>
+  <div class="helper-messages" id="helperMessages">
+    <div class="msg">
+      <div class="msg-avatar">N</div>
+      <div class="msg-text">Привет! Я NOVA. Задай вопрос про метрики, стратегию или конкурентов — помогу разобраться.</div>
+    </div>
+  </div>
+  <div class="helper-input">
+    <input type="text" id="helperInput" placeholder="Что-то непонятно?" onkeypress="if(event.key==='Enter'){sendHelperMessage()}">
+    <button onclick="sendHelperMessage()">Отправить</button>
+  </div>
+</div>
+
+<script>
+  const QUESTIONS = [
+    {id:'area',title:'В какой сфере работает твой продукт?',hint:'Напиши свободно: SaaS, онлайн-школа, FinTech, HR-платформа, интернет-магазин и т.д. Чем точнее — тем точнее конкуренты.',type:'input',placeholder:'Например: платформа для онлайн-обучения'},
+    {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь: малому бизнесу, крупным компаниям или напрямую частным лицам (B2C).',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
+    {id:'product',title:'Как называется твой продукт?',hint:'Укажи рабочее или официальное название — оно появится в итоговом отчёте.',type:'input',placeholder:'Например: MyApp'},
+    {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает. Чем точнее — тем релевантнее конкуренты.',type:'textarea',placeholder:'Например: платформа для онлайн-обучения с AI-куратором для корпоративных команд...'},
+    {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько. Конкуренты и стратегия будут адаптированы под выбранные регионы.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
+    {id:'competitors',title:'Кого ты уже считаешь своим конкурентом?',hint:'Необязательно, но очень важно. Перечисли 1-5 компаний которых знаешь — это резко повысит точность анализа.',type:'textarea',placeholder:'Например: Notion, Confluence, GitBook...'},
+    {id:'price',title:'Какой ценовой диапазон?',hint:'Укажи стартовую цену — это влияет на сравнение с конкурентами в том же ценовом сегменте.',type:'radio',options:['Бесплатно','Freemium (есть бесплатный план)','До $50/мес','$50-200/мес','$200-1000/мес','Enterprise (договорная)']}
+  ];
+
+  const STEP_NAMES = ['Сфера продукта','Целевой клиент','Название','Описание','Рынки','Конкуренты','Ценообразование'];
+
+  const TABS = [
+    {id:'market',emoji:'📊',title:'Рынок'},
+    {id:'audience',emoji:'👤',title:'Аудитория'},
+    {id:'pricing',emoji:'💰',title:'Цены и модели'},
+    {id:'channels',emoji:'📣',title:'Маркетинг'},
+    {id:'product',emoji:'🔧',title:'Продукт'},
+    {id:'reputation',emoji:'⭐',title:'Репутация'},
+    {id:'offers',emoji:'🎯',title:'Офферы'},
+    {id:'strategy',emoji:'📋',title:'Стратегия'}
+  ];
+
+  let state = {step:0, data:{}};
+
+  function renderStepList() {
+    const html = QUESTIONS.map((q,i) => {
+      const cls = i < state.step ? 'si done' : i === state.step ? 'si active' : 'si';
+      const dot = i < state.step ? '✓' : i+1;
+      return `<div class="${cls}">
+        <div class="si-dot">${dot}</div>
+        <div>
+          <div class="si-lbl">Шаг ${i+1}</div>
+          <div class="si-name">${STEP_NAMES[i]}</div>
         </div>
-      </div>
-    </div>
+      </div>`;
+    }).join('');
+    document.getElementById('lpSteps').innerHTML = html;
+  }
 
-    <div id="loadingScreen" class="screen">
-      <div class="loading-spinner"></div>
-      <div class="loading-title">CIPHER АНАЛИЗИРУЕТ</div>
-      <div class="loading-sub" id="loadingStatus">Определяем конкурентов для вашего рынка...</div>
-      <div class="loading-steps">
-        <div class="loading-step" id="ls1">⬜ Анализ рынка и конкурентов</div>
-        <div class="loading-step" id="ls2">⬜ Финансовые метрики</div>
-        <div class="loading-step" id="ls3">⬜ Стратегия на год</div>
-        <div class="loading-step" id="ls4">⬜ Финальные рекомендации</div>
-      </div>
-    </div>
+  function renderQuestion() {
+    const q = QUESTIONS[state.step];
+    document.getElementById('stepBadge').textContent = `Шаг ${state.step + 1} из 7`;
+    document.getElementById('qTitle').textContent = q.title;
+    document.getElementById('qHintText').textContent = q.hint;
+    document.getElementById('novaHint').textContent = q.hint;
+    document.getElementById('stepCounter').textContent = `${state.step + 1} / 7`;
+    document.getElementById('stepProgress').style.width = ((state.step + 1) / 7 * 100) + '%';
+    document.getElementById('prevBtn').style.display = state.step > 0 ? 'block' : 'none';
+    document.getElementById('nextBtn').textContent = state.step === 6 ? 'НАЧАТЬ АНАЛИЗ →' : 'ДАЛЬШЕ →';
+    document.getElementById('qError').textContent = '';
+    renderStepList();
 
-    <div id="analysisScreen" class="screen">
-      <div class="tabs-bar" id="tabsBar"></div>
-      <div class="content" id="content"></div>
-    </div>
-  </div>
+    let html = '';
+    if(q.type === 'radio') {
+      html = `<div class="q-options">${q.options.map(o =>
+        `<button class="q-option ${state.data[q.id] === o ? 'selected' : ''}" onclick="select('${q.id}', '${o}')">${o}</button>`
+      ).join('')}</div>`;
+    } else if(q.type === 'input') {
+      html = `<input type="text" class="fi" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" oninput="updateText('${q.id}', this.value)">`;
+    } else if(q.type === 'textarea') {
+      html = `<textarea class="fi" placeholder="${q.placeholder}" oninput="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
+    } else if(q.type === 'multi') {
+      const selected = state.data[q.id] || [];
+      html = `<div class="q-multi-grid">${q.options.map(o =>
+        `<button class="tbtn ${selected.includes(o) ? 'selected' : ''}" onclick="toggleMulti('${q.id}', '${o}')">${o}</button>`
+      ).join('')}</div>`;
+    }
+    document.getElementById('qAnswers').innerHTML = html;
+  }
 
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">✕</button>
-      <div class="modal-title" id="modalTitle"></div>
-      <div class="modal-text" id="modalBody"></div>
-    </div>
-  </div>
+  function select(id, val) {state.data[id] = val; renderQuestion();}
+  function updateText(id, val) {state.data[id] = val;}
+  function toggleMulti(id, val) {
+    if(!state.data[id]) state.data[id] = [];
+    const arr = state.data[id];
+    if(arr.includes(val)) {state.data[id] = arr.filter(v => v !== val);} else {state.data[id].push(val);}
+    renderQuestion();
+  }
 
-  <button class="helper-btn" onclick="toggleHelper()" title="Помощник NOVA">N</button>
-  
-  <div class="helper-chat" id="helperChat">
-    <div class="helper-header">
-      <span class="helper-title">NOVA - Ассистент</span>
-      <button class="helper-close" onclick="toggleHelper()">✕</button>
-    </div>
-    <div class="helper-messages" id="helperMessages">
-      <div class="msg msg-bot">
-        <div class="msg-avatar">🤖</div>
-        <div class="msg-text">Привет! Я NOVA, твой ассистент. Задай мне вопрос об анализе — помогу разобраться! 👋</div>
-      </div>
-    </div>
-    <div class="helper-input">
-      <input type="text" id="helperInput" placeholder="Что-то непонятно?" onkeypress="if(event.key==='Enter'){sendHelperMessage()}">
-      <button onclick="sendHelperMessage()">Отправить</button>
-    </div>
-  </div>
+  function nextStep() {
+    const q = QUESTIONS[state.step];
+    const val = state.data[q.id];
+    const optional = q.id === 'competitors';
+    if(!optional && (!val || (Array.isArray(val) && val.length === 0))) {
+      document.getElementById('qError').textContent = 'Выбери ответ чтобы продолжить';
+      return;
+    }
+    if(state.step < 6) {state.step++; renderQuestion();} else {startAnalysis();}
+  }
 
-  <script>
-    const QUESTIONS = [
-      {id:'area',title:'В какой сфере работает твой продукт?',hint:'Напиши свободно: SaaS, онлайн-школа, FinTech, HR-платформа, интернет-магазин и т.д. Чем точнее — тем точнее конкуренты.',type:'input',placeholder:'Например: платформа для онлайн-обучения'},
-      {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь: малому бизнесу, крупным компаниям или напрямую частным лицам (B2C).',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
-      {id:'product',title:'Как называется твой продукт?',hint:'Укажи рабочее или официальное название — оно появится в итоговом отчёте.',type:'input',placeholder:'Например: MyApp'},
-      {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает. Чем точнее — тем релевантнее конкуренты.',type:'textarea',placeholder:'Например: платформа для онлайн-обучения с AI-куратором для корпоративных команд...'},
-      {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько. Конкуренты и стратегия будут адаптированы под выбранные регионы.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
-      {id:'competitors',title:'Кого ты уже считаешь своим конкурентом?',hint:'Необязательно, но очень важно. Перечисли 1-5 компаний которых знаешь — это резко повысит точность анализа.',type:'textarea',placeholder:'Например: Notion, Confluence, GitBook...'},
-      {id:'price',title:'Какой ценовой диапазон?',hint:'Укажи стартовую цену — это влияет на сравнение с конкурентами в том же ценовом сегменте.',type:'radio',options:['Бесплатно','Freemium (есть бесплатный план)','До $50/мес','$50-200/мес','$200-1000/мес','Enterprise (договорная)']}
-    ];
+  function prevStep() {if(state.step > 0) {state.step--; renderQuestion();}}
 
-    const TABS = [
-      {id:'market',emoji:'📊',title:'Рынок'},
-      {id:'audience',emoji:'👤',title:'Аудитория'},
-      {id:'pricing',emoji:'💰',title:'Цены и модели'},
-      {id:'channels',emoji:'📣',title:'Маркетинг и каналы'},
-      {id:'product',emoji:'🔧',title:'Продукт'},
-      {id:'reputation',emoji:'⭐',title:'Репутация'},
-      {id:'offers',emoji:'🎯',title:'Офферы'},
-      {id:'strategy',emoji:'📋',title:'Стратегия'}
-    ];
+  function startAnalysis() {
+    document.getElementById('questionsScreen').classList.remove('active');
+    document.getElementById('loadingScreen').classList.add('active');
+    fetchAnalysis();
+  }
 
+  function setLoadingStep(idx, status) {
+    const ids = ['ls1','ls2','ls3','ls4'];
+    const el = document.getElementById(ids[idx]);
+    if (!el) return;
+    el.className = 'lst' + (status === 'done' ? ' done' : status === 'active' ? ' active' : '');
+    const dot = el.querySelector('.lst-dot');
+    if(dot) {
+      dot.style.background = status === 'done' ? 'var(--green)' : status === 'active' ? 'var(--gold)' : '';
+      dot.style.boxShadow = status === 'active' ? '0 0 8px var(--gold)' : '';
+    }
+  }
 
-    let state = {step:0, data:{}};
+  async function fetchAnalysis() {
+    setLoadingStep(0, 'active');
+    const t1 = setTimeout(() => setLoadingStep(1, 'active'), 3000);
+    const t2 = setTimeout(() => setLoadingStep(2, 'active'), 5000);
 
-    function renderQuestion() {
-      const q = QUESTIONS[state.step];
-      document.getElementById('qTitle').textContent = q.title;
-      document.getElementById('novaHint').textContent = q.hint;
-      document.getElementById('stepCounter').textContent = (state.step + 1) + ' из 7';
-      document.getElementById('stepProgress').style.width = ((state.step + 1) / 7 * 100) + '%';
-      document.getElementById('prevBtn').style.display = state.step > 0 ? 'block' : 'none';
-      document.getElementById('nextBtn').textContent = state.step === 6 ? '🚀 НАЧАТЬ АНАЛИЗ' : 'ДАЛЬШЕ →';
-
-      let html = '';
-      if(q.type === 'radio') {
-        html = q.options.map(o => `<div><div class="q-option ${state.data[q.id] === o ? 'selected' : ''}" onclick="select('${q.id}', '${o}')">${o}</div>${o === 'Другое' && state.data[q.id] === o ? `<input type="text" class="q-input" style="margin-top:8px" placeholder="Укажи свой вариант..." value="${state.data[q.id + '_other'] || ''}" onchange="updateText('${q.id}_other', this.value)">` : ''}</div>`).join('');
-      } else if(q.type === 'input') {
-        html = `<input type="text" class="q-input" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" oninput="updateText('${q.id}', this.value)">`;
-      } else if(q.type === 'textarea') {
-        html = `<textarea class="q-textarea" placeholder="${q.placeholder}" oninput="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
-      } else if(q.type === 'multi') {
-        const selected = state.data[q.id] || [];
-        html = q.options.map(o => `<div class="q-multi-option ${selected.includes(o) ? 'selected' : ''}" onclick="toggleMulti('${q.id}', '${o}')"><input type="checkbox" ${selected.includes(o) ? 'checked' : ''} style="pointer-events:none"><span>${o}</span></div>`).join('');
+    try {
+      const response = await fetch('/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({...state.data, tab: 'market'})
+      });
+      clearTimeout(t1); clearTimeout(t2);
+      setLoadingStep(0, 'done'); setLoadingStep(1, 'done');
+      setLoadingStep(2, 'active');
+      if (!response.ok) throw new Error('API error ' + response.status);
+      const data = await response.json();
+      setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
+      if (data && data.market) {
+        if (!state.aiData) state.aiData = {};
+        state.aiData.market = data.market;
+        if (data.competitors) state.competitorNames = data.competitors;
+      } else {
+        state.aiData = null;
+        state.lastError = 'Нет данных в ответе';
       }
-
-      document.getElementById('qAnswers').innerHTML = html;
+    } catch (e) {
+      clearTimeout(t1); clearTimeout(t2);
+      [0,1,2,3].forEach(i => setLoadingStep(i, 'done'));
+      state.aiData = null;
+      state.lastError = e.message;
     }
 
-    function select(id, val) {state.data[id] = val; renderQuestion();}
-    function updateText(id, val) {state.data[id] = val;}
-    function toggleMulti(id, val) {
-      if(!state.data[id]) state.data[id] = [];
-      const arr = state.data[id];
-      if(arr.includes(val)) {state.data[id] = arr.filter(v => v !== val);} else {state.data[id].push(val);}
-      renderQuestion();
-    }
+    setTimeout(() => {
+      document.getElementById('loadingScreen').classList.remove('active');
+      document.getElementById('analysisScreen').classList.add('active');
+      document.getElementById('anProduct').textContent = state.data.product || '';
+      renderTabs();
+    }, 300);
+  }
 
-    function nextStep() {
-      const q = QUESTIONS[state.step];
-      const val = state.data[q.id];
-      const optional = q.id === 'competitors';
-      if(!optional && (!val || (Array.isArray(val) && val.length === 0))) {
-        document.getElementById('qError').textContent = 'Выбери ответ чтобы продолжить';
+  async function fetchTab(tabId) {
+    document.getElementById('content').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:50vh;gap:14px;flex-direction:column">
+        <div style="width:36px;height:36px;border:2px solid var(--border2);border-top:2px solid var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>
+        <div style="font-size:12px;color:var(--muted)">Загружаю данные...</div>
+      </div>`;
+    try {
+      const response = await fetch('/.netlify/functions/analyze', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({...state.data, tab: tabId, competitorNames: state.competitorNames || []})
+      });
+      if (!response.ok) throw new Error('API error ' + response.status);
+      const data = await response.json();
+      if (data && data[tabId]) {
+        if (!state.aiData) state.aiData = {};
+        state.aiData[tabId] = data[tabId];
+      }
+    } catch (e) {
+      state.lastError = e.message;
+    }
+    switchTab(TABS.findIndex(t => t.id === tabId));
+  }
+
+  function renderTabs() {
+    const html = TABS.map((t,i) =>
+      `<button class="tab ${i === 0 ? 'on' : ''}" onclick="switchTab(${i})">${t.emoji} ${t.title}</button>`
+    ).join('');
+    document.getElementById('tabsBar').innerHTML = html;
+    switchTab(0);
+  }
+
+  function renderStrategyQuarter(key, data, label, dotColor) {
+    const actions = (data.actions || []).map(a => `
+      <div class="q-action">
+        <div>
+          <div class="q-action-title">${a.title}</div>
+          <div class="q-action-detail">${a.detail}</div>
+        </div>
+        <div class="q-action-budget">${a.budget}</div>
+      </div>`).join('');
+    return `
+      <div class="q-card">
+        <div class="q-card-head">
+          <div class="q-card-dot" style="background:${dotColor}"></div>
+          ${label}
+        </div>
+        <div class="q-card-goal">
+          <strong>Цель:</strong> ${data.goal || '—'} &nbsp;·&nbsp;
+          <strong>Учись у:</strong> <span style="color:var(--blue)">${data.learnFrom || '—'}</span>
+        </div>
+        ${actions}
+        <div class="q-metrics"><span>Метрики:</span> ${data.metrics || '—'}</div>
+      </div>`;
+  }
+
+  function switchTab(idx) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('on', i === idx));
+    const tab = TABS[idx];
+    const product = state.data.product || 'Ваш продукт';
+
+    if(tab.id === 'strategy') {
+      const ai = state.aiData && state.aiData.strategy;
+      if (!ai) {
+        document.getElementById('content').innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;text-align:center;padding:20px">
+            <div style="font-size:40px">📋</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)">Стратегия не загружена</div>
+            <div style="font-size:12px;color:var(--muted);max-width:320px;line-height:1.6">Нажми чтобы сгенерировать годовую стратегию на основе анализа конкурентов.</div>
+            <button onclick="fetchTab('strategy')" style="padding:11px 26px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">
+              Загрузить стратегию
+            </button>
+          </div>`;
         return;
       }
-      document.getElementById('qError').textContent = '';
-      if(state.step < 6) {state.step++; renderQuestion();} else {startAnalysis();}
-    }
-
-    function prevStep() {if(state.step > 0) {state.step--; renderQuestion();}}
-
-    function startAnalysis() {
-      document.getElementById('questionsScreen').classList.remove('active');
-      document.getElementById('loadingScreen').classList.add('active');
-      fetchAnalysis();
-    }
-
-    function setLoadingStep(idx, status) {
-      const ids = ['ls1','ls2','ls3','ls4'];
-      const el = document.getElementById(ids[idx]);
-      if (!el) return;
-      el.className = 'loading-step' + (status === 'done' ? ' done' : status === 'active' ? ' active' : '');
-      el.textContent = el.textContent.replace('⬜','').replace('✅','').replace('🔄','').trimStart();
-      if (status === 'done') el.textContent = '✅ ' + el.textContent;
-      else if (status === 'active') el.textContent = '🔄 ' + el.textContent;
-      else el.textContent = '⬜ ' + el.textContent;
-    }
-
-    async function fetchAnalysis() {
-      setLoadingStep(0, 'active');
-      const t1 = setTimeout(() => setLoadingStep(1, 'active'), 3000);
-      const t2 = setTimeout(() => setLoadingStep(2, 'active'), 5000);
-
-      try {
-        const response = await fetch('/.netlify/functions/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...state.data, tab: 'market' })
-        });
-
-        clearTimeout(t1); clearTimeout(t2);
-        setLoadingStep(0, 'done'); setLoadingStep(1, 'done');
-        setLoadingStep(2, 'active');
-
-        if (!response.ok) throw new Error('API error ' + response.status);
-        const data = await response.json();
-
-        setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
-
-        if (data && data.market) {
-          if (!state.aiData) state.aiData = {};
-          state.aiData.market = data.market;
-          if (data.competitors) state.competitorNames = data.competitors;
-        } else {
-          state.aiData = null;
-          state.lastError = 'Нет данных market в ответе';
-        }
-      } catch (e) {
-        clearTimeout(t1); clearTimeout(t2);
-        [0,1,2,3].forEach(i => setLoadingStep(i, 'done'));
-        state.aiData = null;
-        state.lastError = e.message;
-      }
-
-      setTimeout(() => {
-        document.getElementById('loadingScreen').classList.remove('active');
-        document.getElementById('analysisScreen').classList.add('active');
-        renderTabs();
-      }, 300);
-    }
-
-    async function fetchTab(tabId) {
-      const content = document.getElementById('content');
-      content.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:60%;gap:12px;flex-direction:column">
-        <div style="width:36px;height:36px;border:3px solid var(--line2);border-top:3px solid var(--acid);border-radius:50%;animation:spin 1s linear infinite"></div>
-        <div style="font-size:12px;color:var(--txt2)">Загружаю данные...</div>
-      </div>`;
-
-      try {
-        const response = await fetch('/.netlify/functions/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...state.data, tab: tabId, competitorNames: state.competitorNames || [] })
-        });
-        if (!response.ok) throw new Error('API error ' + response.status);
-        const data = await response.json();
-        if (data && data[tabId]) {
-          if (!state.aiData) state.aiData = {};
-          state.aiData[tabId] = data[tabId];
-          if (tabId === 'strategy' && data.strategy) state.aiData.strategy = data.strategy;
-        }
-      } catch (e) {
-        state.lastError = e.message;
-      }
-      const idx = TABS.findIndex(t => t.id === tabId);
-      switchTab(idx);
-    }
-
-    function renderTabs() {
-      const html = TABS.map((t,i) => `<button class="tab ${i === 0 ? 'on' : ''}" onclick="switchTab(${i})">${t.emoji} ${t.title}</button>`).join('');
-      document.getElementById('tabsBar').innerHTML = html;
-      switchTab(0);
-    }
-
-    function renderStrategyQuarter(q, data, label, color) {
-      const actions = (data.actions || []).map(a =>
-        `<div class="summary-item">✓ <strong>${a.title}</strong> (${a.budget})</div>
-         <div class="summary-item">  └ ${a.detail}</div>`
-      ).join('');
-      return `
-        <div class="summary-box">
-          <div class="summary-title" style="font-size:13px">${color} ${label}</div>
-          <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
-            <strong style="color:var(--acid)">📌 Главная цель:</strong> ${data.goal || ''}<br>
-            <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">${data.learnFrom || ''}</span>
-          </div>
-          ${actions}
-          <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-            <strong style="color:var(--acid)">📊 Метрики:</strong> ${data.metrics || ''}
-          </div>
-        </div>`;
-    }
-
-    function switchTab(idx) {
-      document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('on', i === idx));
-
-      const tab = TABS[idx];
-      const product = state.data.product || 'Ваш продукт';
-      const segment = state.data.segment || 'ваш сегмент';
-      const geo = Array.isArray(state.data.geography) ? state.data.geography.join(', ') : 'ваш регион';
-
-      if(tab.id === 'strategy') {
-        const ai = state.aiData && state.aiData.strategy;
-
-        if (!ai) {
-          document.getElementById('content').innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
-              <div style="font-size:48px">📋</div>
-              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Стратегия не загружена</div>
-              <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
-                Нажми чтобы сгенерировать годовую стратегию на основе анализа конкурентов.
-              </div>
-              <button onclick="fetchTab('strategy')" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),var(--sky));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
-                ⬇️ ЗАГРУЗИТЬ СТРАТЕГИЮ
-              </button>
-            </div>
-          `;
-          return;
-        }
-
-        const s = ai;
-        const f = s.finance || {};
-
-        const q1html = renderStrategyQuarter('q1', s.q1 || {}, '🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ', '🔴');
-        const q2html = renderStrategyQuarter('q2', s.q2 || {}, '🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ', '🟡');
-        const q3html = renderStrategyQuarter('q3', s.q3 || {}, '🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ', '🟡');
-        const q4html = renderStrategyQuarter('q4', s.q4 || {}, '🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ', '🟢');
-
-        const totalInvest = f.totalInvest || '—';
-        const arr = f.arr || '—';
-        const payback = f.payback || '—';
-        const roi = f.roi || '—';
-        const q1i = f.q1invest || '—'; const q2i = f.q2invest || '—';
-        const q3i = f.q3invest || '—'; const q4i = f.q4invest || '—';
-        const q1r = f.q1revenue || '—'; const q2r = f.q2revenue || '—';
-        const q3r = f.q3revenue || '—'; const q4r = f.q4revenue || '—';
-        const ltvCac = f.ltvCac || '—';
-        const gm = f.grossMargin || '—';
-
-        const html = `
-          <h2 style="color:var(--acid);margin-bottom:16px;font-size:16px;font-family:'Syne',sans-serif">📋 СТРАТЕГИЯ ДЛЯ ${product.toUpperCase()}</h2>
-
-          <div class="summary-box" style="background:rgba(184,255,60,.08);border:2px solid rgba(184,255,60,.3)">
-            <div class="summary-title" style="font-size:12px">🚀 ПЛАН НА ГОД</div>
-            <div class="summary-item">💵 Инвестиции: ~${totalInvest} | 📈 ARR: +${arr} | ⏱️ Payback: ${payback}</div>
-          </div>
-
-          ${q1html}${q2html}${q3html}${q4html}
-
-          <div style="background:rgba(255,194,51,.05);border:1px solid rgba(255,194,51,.2);border-radius:8px;padding:12px;margin-top:16px">
-            <div style="font-size:12px;font-weight:600;color:#ffc233;margin-bottom:8px">💰 ИТОГОВЫЙ ФИНАНСОВЫЙ ПРОГНОЗ ДЛЯ ${product.toUpperCase()}</div>
-            <div style="font-size:10px;color:var(--txt2);line-height:1.8">
-              <strong>Год 1 (Инвестиции):</strong><br>
-              └ Q1: ${q1i} | Q2: ${q2i} | Q3: ${q3i} | Q4: ${q4i} | <strong style="color:var(--acid)">ИТОГО: ${totalInvest}</strong><br><br>
-              <strong>Год 1 (Доход):</strong><br>
-              └ Q1: ${q1r} | Q2: ${q2r} | Q3: ${q3r} | Q4: ${q4r} | <strong style="color:var(--acid)">ARR: ${arr}</strong><br><br>
-              <strong>Финансовые показатели:</strong><br>
-              └ Payback period: ${payback}<br>
-              └ ROI: ${roi}<br>
-              └ LTV/CAC ratio: ${ltvCac}<br>
-              └ Gross Margin: ${gm}
-            </div>
-          </div>
-        `;
-        document.getElementById('content').innerHTML = html;
-      } else {
-        const aiTabData = state.aiData && state.aiData[tab.id];
-
-        if (!aiTabData) {
-          const isFirstTab = tab.id === 'market';
-          document.getElementById('content').innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
-              <div style="font-size:48px">${isFirstTab ? '⚠️' : '📋'}</div>
-              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">${isFirstTab ? 'Анализ не загрузился' : 'Раздел не загружен'}</div>
-              <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
-                ${isFirstTab ? 'Не удалось получить данные от AI.<br>Попробуй снова.' : `Нажми чтобы загрузить раздел <strong style="color:var(--txt)">${tab.emoji} ${tab.title}</strong>.`}
-              </div>
-              ${state.lastError && isFirstTab ? `<div style="font-size:10px;color:#ff6b6b;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2);border-radius:6px;padding:8px 14px;max-width:360px;word-break:break-all">${state.lastError}</div>` : ''}
-              <button onclick="${isFirstTab ? 'retryAnalysis()' : `fetchTab('${tab.id}')`}" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),var(--sky));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
-                ${isFirstTab ? '🔄 ПОПРОБОВАТЬ СНОВА' : '⬇️ ЗАГРУЗИТЬ РАЗДЕЛ'}
-              </button>
-              ${isFirstTab ? `<button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">← Изменить данные</button>` : ''}
-            </div>
-          `;
-          return;
-        }
-
-        const data = aiTabData;
-        const bestCompany = data.bestCompany || '';
-        const bestAdvice = data.bestAdvice || '';
-        const criticalRec = state.aiData.strategy && state.aiData.strategy.criticalRec;
-        const importantRec = state.aiData.strategy && state.aiData.strategy.importantRec;
-
-        const tableHtml = `
-          <table>
-            <thead><tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-            <tbody>${data.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
-          </table>
-        `;
-
-        const html = `
-          <h2 style="color:var(--acid);margin-bottom:12px;font-size:14px">${tab.emoji} ${tab.title}</h2>
-
-          ${bestCompany ? `<div style="background:rgba(65,200,255,.08);border:1px solid rgba(65,200,255,.2);border-radius:8px;padding:10px;margin-bottom:14px">
-            <div style="font-size:10px;color:var(--txt2)">
-              <strong style="color:var(--sky)">👤 Учись у ${bestCompany}:</strong> ${bestAdvice}
-            </div>
-          </div>` : ''}
-
-          <div class="table-wrapper">${tableHtml}</div>
-
-          <div class="summary-box">
-            <div class="summary-title">📍 ВЫВОДЫ</div>
-            ${data.summary.map(s => `<div class="summary-item">• ${s}</div>`).join('')}
-          </div>
-
-          ${criticalRec ? `<div class="rec-item">
-            <div class="rec-pri">🔴 КРИТИЧНО</div>
-            <div class="rec-title">${criticalRec}</div>
-          </div>` : ''}
-
-          ${importantRec ? `<div class="rec-item">
-            <div class="rec-pri">🟡 ВАЖНО</div>
-            <div class="rec-title">${importantRec}</div>
-          </div>` : ''}
-
-          <button class="btn-analysis" onclick="showModal(${idx})">📋 ТАБЛИЦА ЦЕЛИКОМ</button>
-        `;
-        document.getElementById('content').innerHTML = html;
-      }
-    }
-
-    function showModal(idx) {
-      const tab = TABS[idx];
-      const data = state.aiData && state.aiData[tab.id];
-      if (!data) return;
-      const product = state.data.product || 'Ваш продукт';
-      
-      document.getElementById('modalTitle').textContent = tab.emoji + ' ' + tab.title + ' для ' + product;
-      
-      let tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:12px">';
-      tableHtml += '<thead style="background:rgba(184,255,60,.1)"><tr>';
-      tableHtml += data.headers.map(h => `<th style="padding:8px;text-align:left;color:var(--acid);border-bottom:2px solid rgba(184,255,60,.2)">${h}</th>`).join('');
-      tableHtml += '</tr></thead>';
-      tableHtml += '<tbody>';
-      tableHtml += data.rows.map(row => `<tr>${row.map(cell => `<td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05)">${cell}</td>`).join('')}</tr>`).join('');
-      tableHtml += '</tbody></table>';
-
-      document.getElementById('modalBody').innerHTML = `
-        ${tableHtml}
-        <div style="margin-bottom:12px">
-          <div style="font-weight:600;color:var(--acid);margin-bottom:6px;font-size:11px">📍 АНАЛИЗ</div>
-          <div style="font-size:10px;color:var(--txt2);line-height:1.6">${data.summary.join(' | ')}</div>
+      const s = ai;
+      const f = s.finance || {};
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:20px">
+          Стратегия для ${product}
         </div>
-        <div>
-          <div style="font-weight:600;color:var(--acid);margin-bottom:6px;font-size:11px">💡 РЕКОМЕНДАЦИИ</div>
-          <div style="font-size:10px;color:var(--txt2)">${
-            (state.aiData && state.aiData.strategy)
-              ? `1. ${state.aiData.strategy.criticalRec || ''}<br>2. ${state.aiData.strategy.importantRec || ''}`
-              : `1. Локализируйте ${product}<br>2. Оптимизируйте стратегию<br>3. Запустите инициативы`
-          }</div>
+        <div class="fin-grid">
+          <div class="fin-card"><div class="fin-lbl">Инвестиции</div><div class="fin-val">${f.totalInvest||'—'}</div><div class="fin-sub">год 1</div></div>
+          <div class="fin-card"><div class="fin-lbl">ARR</div><div class="fin-val">${f.arr||'—'}</div><div class="fin-sub">прогноз</div></div>
+          <div class="fin-card"><div class="fin-lbl">Payback</div><div class="fin-val">${f.payback||'—'}</div><div class="fin-sub">период окупаемости</div></div>
+          <div class="fin-card"><div class="fin-lbl">ROI</div><div class="fin-val">${f.roi||'—'}</div><div class="fin-sub">возврат</div></div>
         </div>
+        ${renderStrategyQuarter('q1',s.q1||{},'Q1 · Месяц 1–3 · Фундамент','#f87171')}
+        ${renderStrategyQuarter('q2',s.q2||{},'Q2 · Месяц 4–6 · Расширение','#fbbf24')}
+        ${renderStrategyQuarter('q3',s.q3||{},'Q3 · Месяц 7–9 · Монетизация','#fbbf24')}
+        ${renderStrategyQuarter('q4',s.q4||{},'Q4 · Месяц 10–12 · Масштабирование','#34d399')}
+        ${s.criticalRec ? `<div class="rec-item" style="border-color:var(--red)"><div class="rec-pri" style="color:var(--red)">Критично</div><div class="rec-title">${s.criticalRec}</div></div>` : ''}
+        ${s.importantRec ? `<div class="rec-item"><div class="rec-pri">Важно</div><div class="rec-title">${s.importantRec}</div></div>` : ''}
       `;
-      document.getElementById('modal').classList.add('open');
+      return;
     }
 
-    function closeModal() {
-      document.getElementById('modal').classList.remove('open');
+    const aiTabData = state.aiData && state.aiData[tab.id];
+    if (!aiTabData) {
+      const isMarket = tab.id === 'market';
+      document.getElementById('content').innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;text-align:center;padding:20px">
+          <div style="font-size:36px">${isMarket ? '⚠️' : '📋'}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text)">${isMarket ? 'Анализ не загрузился' : 'Раздел не загружен'}</div>
+          <div style="font-size:12px;color:var(--muted);max-width:300px;line-height:1.6">
+            ${isMarket ? 'Не удалось получить данные.<br>' + (state.lastError ? `<span style="color:var(--red)">${state.lastError}</span>` : '') : `Нажми чтобы загрузить ${tab.emoji} ${tab.title}`}
+          </div>
+          <button onclick="${isMarket ? 'retryAnalysis()' : `fetchTab('${tab.id}')`}" style="padding:10px 24px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">
+            ${isMarket ? 'Попробовать снова' : 'Загрузить раздел'}
+          </button>
+          ${isMarket ? `<button onclick="goBack()" style="padding:8px 18px;background:none;color:var(--muted);border:1.5px solid var(--border2);border-radius:7px;font-size:12px;cursor:pointer">← Изменить данные</button>` : ''}
+        </div>`;
+      return;
     }
 
-    function retryAnalysis() {
-      state.aiData = {};
-      state.competitorNames = [];
-      state.lastError = '';
-      document.getElementById('analysisScreen').classList.remove('active');
-      document.getElementById('loadingScreen').classList.add('active');
-      ['ls1','ls2','ls3','ls4'].forEach(id => {
-        const el = document.getElementById(id);
-        el.className = 'loading-step';
-        el.textContent = el.textContent.replace(/^[⬜✅🔄]\s*/,'');
-        el.textContent = '⬜ ' + el.textContent;
-      });
-      fetchAnalysis();
-    }
-
-    function goBack() {
-      state.aiData = undefined;
-      state.step = 0;
-      document.getElementById('analysisScreen').classList.remove('active');
-      document.getElementById('questionsScreen').classList.add('active');
-      renderQuestion();
-    }
-
-    renderQuestion();
-
-    // ===== ПОМОЩНИК NOVA =====
-    const HELPER_KNOWLEDGE = {
-      tam: {keywords: ['tam', 'рынок', 'объём', 'размер'], answer: 'TAM (Total Addressable Market) — общий объём рынка, то есть максимальная выручка если занять 100% рынка. Чем больше TAM, тем шире потенциал для роста.'},
-      cagr: {keywords: ['cagr', 'рост', 'годовой'], answer: 'CAGR — среднегодовой темп роста рынка. Например, CAGR 20% означает, что рынок удваивается каждые ~3.5 года. Высокий CAGR = хорошее время для входа.'},
-      ltv: {keywords: ['ltv', 'жизненный цикл', 'стоимость клиента'], answer: 'LTV (Lifetime Value) — общая прибыль от одного клиента за всё время. Чем выше LTV, тем больше можно тратить на привлечение и оставаться прибыльным.'},
-      cac: {keywords: ['cac', 'стоимость привлечения', 'цена', 'маркетинг'], answer: 'CAC (Customer Acquisition Cost) — сколько стоит привлечь одного платящего клиента. Включает маркетинг, продажи и онбординг. Здоровое соотношение LTV:CAC = 3:1 и выше.'},
-      payback: {keywords: ['payback', 'окупаемость', 'когда окупится'], answer: 'Payback period — за сколько месяцев прибыль от клиента покрывает стоимость его привлечения. Хороший показатель для SaaS: 6-18 месяцев. Чем короче — тем быстрее можно реинвестировать.'},
-      segment: {keywords: ['segment', 'сегмент', 'smb', 'enterprise', 'целевой'], answer: 'Сегментация рынка — разделение аудитории на группы с похожими потребностями. SMB (малый бизнес) ценит простоту, Enterprise — надёжность и поддержку. Правильный сегмент определяет всю стратегию.'},
-      gtm: {keywords: ['gtm', 'доступ к рынку', 'стратегия входа', 'как продвигать'], answer: 'GTM (Go-To-Market) — план выхода продукта на рынок: кому продавать, по каким каналам, с каким позиционированием. Включает выбор каналов, ценообразование и первичный маркетинг.'},
-      plg: {keywords: ['plg', 'product-led', 'бесплатная версия'], answer: 'PLG (Product-Led Growth) — продукт сам приводит и конвертирует пользователей через бесплатный триал или freemium. Снижает CAC и ускоряет рост за счёт виральности и самостоятельного онбординга.'},
-      localization: {keywords: ['локализ', 'язык', 'страна', 'валюта'], answer: 'Локализация — адаптация продукта под конкретный рынок: язык, валюта, местные платёжные методы, регуляторные требования. Повышает конверсию и доверие в целевом регионе.'},
-      freemium: {keywords: ['freemium', 'бесплатный', 'платный'], answer: 'Freemium — бесплатный базовый план с ограничениями, платный — с расширенными возможностями. Снижает барьер входа, увеличивает базу пользователей и помогает конвертировать через продуктовый опыт.'},
-      soc2: {keywords: ['soc2', 'gdpr', 'безопасность', 'compliance', 'сертификат'], answer: 'SOC2 и GDPR — стандарты безопасности и защиты данных. SOC2 обязателен для продаж в США, GDPR — для Европы. Без сертификации крупные клиенты и Enterprise-сделки практически недостижимы.'},
-      affiliate: {keywords: ['affiliate', 'партнёр', 'партнёрская программа'], answer: 'Партнёрская программа — внешние партнёры продвигают твой продукт за комиссию (обычно 15-30% от продажи). Масштабирует привлечение без прямых маркетинговых затрат.'},
-      ai: {keywords: ['ai', 'искусственный интеллект', 'машинное обучение'], answer: 'AI-функции в продукте — автоматизация рутинных задач, умные рекомендации, предиктивная аналитика. В 2026 году AI стал ожидаемой базовой функцией, а не конкурентным преимуществом.'},
-      mobile: {keywords: ['mobile', 'приложение', 'мобильное', 'ios', 'android'], answer: 'Мобильное приложение — версия продукта для смартфонов. Важно для аудитории, работающей вне офиса. Требует отдельной разработки и поддержки, но значительно расширяет охват.'},
-      q1: {keywords: ['q1', 'первый квартал', 'фундамент'], answer: 'Q1 — квартал фундамента: фиксируются ключевые гипотезы, запускается MVP или первые итерации продукта, строится базовая воронка привлечения. Цель — первые платящие клиенты.'},
-      q2: {keywords: ['q2', 'второй квартал', 'расширение'], answer: 'Q2 — квартал расширения: масштабируются каналы привлечения, улучшается конверсия на основе данных Q1, добавляются интеграции и функции для удержания клиентов.'},
-      q3: {keywords: ['q3', 'третий квартал', 'монетизация'], answer: 'Q3 — квартал монетизации: оптимизируется ценообразование, тестируются новые тарифные планы, строится работа с базой для увеличения LTV и снижения churn.'},
-      q4: {keywords: ['q4', 'четвёртый квартал', 'масштабирование'], answer: 'Q4 — квартал масштабирования: проверенные каналы получают больше бюджета, строится команда, готовится план на следующий год с учётом всех данных.'},
-      investment: {keywords: ['инвестиц', 'бюджет', 'сколько потребуется', 'расходы'], answer: 'Инвестиции зависят от сферы, команды и каналов продвижения. CIPHER анализирует именно твой рынок и формирует реалистичные цифры — смотри финансовую модель в стратегии.'},
-      roi: {keywords: ['roi', 'рентабельность', 'возврат'], answer: 'ROI (Return on Investment) — возврат на вложения. Считается как (доход − затраты) / затраты × 100%. Для роста важен не только высокий ROI, но и скорость возврата (payback period).'}
-    };
-
-    function toggleHelper() {
-      const chat = document.getElementById('helperChat');
-      chat.classList.toggle('open');
-      if(chat.classList.contains('open')) {
-        document.getElementById('helperInput').focus();
-      }
-    }
-
-    function sendHelperMessage() {
-      const input = document.getElementById('helperInput');
-      const text = input.value.trim();
-      if(!text) return;
-
-      addHelperMessage(text, 'user');
-      input.value = '';
-      
-      // Показываем индикатор печатания
-      addHelperMessage('🤖 печатает...', 'bot-typing');
-      
-      // Отправляем запрос к OpenAI API через Netlify функцию
-      getHelperResponse(text).then(response => {
-        // Удаляем индикатор печатания
-        const msgs = document.getElementById('helperMessages');
-        const lastMsg = msgs.lastChild;
-        if(lastMsg && lastMsg.textContent.includes('печатает')) {
-          lastMsg.remove();
-        }
-        addHelperMessage(response, 'bot');
-      }).catch(error => {
-        // Если API не доступен, используем локальные ответы
-        const msgs = document.getElementById('helperMessages');
-        const lastMsg = msgs.lastChild;
-        if(lastMsg && lastMsg.textContent.includes('печатает')) {
-          lastMsg.remove();
-        }
-        addHelperMessage(getLocalHelperResponse(text), 'bot');
-      });
-    }
-
-    function addHelperMessage(text, type) {
-      const msgs = document.getElementById('helperMessages');
-      const msg = document.createElement('div');
-      msg.className = `msg msg-${type === 'bot' ? 'bot' : type === 'bot-typing' ? 'bot' : ''}`;
-      
-      if(type === 'bot' || type === 'bot-typing') {
-        msg.innerHTML = `<div class="msg-avatar">🤖</div><div class="msg-text">${text}</div>`;
-      } else {
-        msg.innerHTML = `<div style="flex:1;text-align:right"><div style="background:rgba(184,255,60,.15);border-right:2px solid var(--acid);padding:8px;border-radius:6px;color:var(--txt);display:inline-block;max-width:70%">${text}</div></div>`;
-      }
-      
-      msgs.appendChild(msg);
-      msg.style.animation = 'fadeIn .3s ease-in';
-      msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    async function getHelperResponse(question) {
-      try {
-        const response = await fetch('/.netlify/functions/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: question })
-        });
-        
-        if(!response.ok) throw new Error('API error');
-        const data = await response.json();
-        return data.answer || 'Не смог обработать вопрос';
-      } catch (e) {
-        // Fallback на локальные ответы если API недоступна
-        throw e;
-      }
-    }
-
-    function getLocalHelperResponse(question) {
-      const q = question.toLowerCase();
-      
-      // Поиск по ключевым словам
-      for(let key in HELPER_KNOWLEDGE) {
-        const kb = HELPER_KNOWLEDGE[key];
-        if(kb.keywords.some(kw => q.includes(kw))) {
-          return kb.answer;
-        }
-      }
-
-      // Контекстные ответы
-      if(q.includes('что') || q.includes('как') || q.includes('зачем') || q.includes('почему')) {
-        if(q.includes('лучший') || q.includes('лидер')) {
-          return 'Лидеры рынка отличаются чётким позиционированием, сильным PLG или Sales-motion, и глубоким пониманием своего сегмента. CIPHER показывает, что делают лидеры именно в твоей нише.';
-        }
-        if(q.includes('стартап') || q.includes('новая') || q.includes('начать')) {
-          return 'На старте важно: 1️⃣ Чётко определить целевой сегмент, 2️⃣ Выбрать один главный канал привлечения, 3️⃣ Быстро проверить гипотезы на реальных пользователях. Не пытайся охватить всё сразу.';
-        }
-        if(q.includes('конкур')) {
-          return 'Конкуренты показаны в таблице анализа. CIPHER собирает актуальные данные по твоему рынку — смотри вкладки "Конкуренты" и "Маркетинг и каналы" для деталей.';
-        }
-      }
-
-      if(q.includes('сколько') || q.includes('цена') || q.includes('стоит')) {
-        return 'Конкретные цифры зависят от твоего продукта и рынка. Финансовую модель с инвестициями и ожидаемым доходом CIPHER формирует в разделе "Стратегия" после анализа.';
-      }
-
-      if(q.includes('помощь') || q.includes('вопрос') || q.includes('не ясно')) {
-        return 'Задай вопрос про: TAM, CAC, LTV, CAGR, стратегию по кварталам (Q1-Q4), локализацию, PLG, freemium, SOC2, мобильные приложения, инвестиции, ROI. Я помогу!';
-      }
-
-      return '🤔 Интересный вопрос! К сожалению, я не уверен в ответе. Попробуй спросить про метрики (TAM, CAC, LTV), стратегию (Q1-Q4) или технологии (AI, Mobile, Интеграции).';
-    }
-
-    // Добавляем CSS анимацию
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
+    const data = aiTabData;
+    const criticalRec = state.aiData.strategy && state.aiData.strategy.criticalRec;
+    const importantRec = state.aiData.strategy && state.aiData.strategy.importantRec;
+    document.getElementById('content').innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">${tab.emoji} ${tab.title}</div>
+      ${data.bestCompany ? `<div class="best-company"><strong>Учись у ${data.bestCompany}:</strong> ${data.bestAdvice}</div>` : ''}
+      <div class="table-wrapper">
+        <table>
+          <thead><tr>${data.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+          <tbody>${data.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="summary-box">
+        <div class="summary-title">Выводы</div>
+        ${data.summary.map(s=>`<div class="summary-item">· ${s}</div>`).join('')}
+      </div>
+      ${criticalRec ? `<div class="rec-item" style="border-color:var(--red)"><div class="rec-pri" style="color:var(--red)">Критично</div><div class="rec-title">${criticalRec}</div></div>` : ''}
+      ${importantRec ? `<div class="rec-item"><div class="rec-pri">Важно</div><div class="rec-title">${importantRec}</div></div>` : ''}
+      <button class="btn-analysis" onclick="showModal(${idx})">📋 Полная таблица</button>
     `;
-    document.head.appendChild(style);
-  </script>
+  }
+
+  function showModal(idx) {
+    const tab = TABS[idx];
+    const data = state.aiData && state.aiData[tab.id];
+    if (!data) return;
+    document.getElementById('modalTitle').textContent = tab.emoji + ' ' + tab.title;
+    document.getElementById('modalBody').innerHTML = `
+      <div style="overflow-x:auto;margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead style="background:var(--surface2)"><tr>${data.headers.map(h=>`<th style="padding:9px 11px;text-align:left;color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border2)">${h}</th>`).join('')}</tr></thead>
+          <tbody>${data.rows.map(row=>`<tr>${row.map(cell=>`<td style="padding:8px 11px;border-bottom:1px solid var(--border);color:var(--text2)">${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Выводы</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">${data.summary.join('<br>')}</div>
+    `;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {document.getElementById('modal').classList.remove('open');}
+
+  function retryAnalysis() {
+    state.aiData = {};
+    state.competitorNames = [];
+    state.lastError = '';
+    document.getElementById('analysisScreen').classList.remove('active');
+    document.getElementById('loadingScreen').classList.add('active');
+    ['ls1','ls2','ls3','ls4'].forEach(id => setLoadingStep(['ls1','ls2','ls3','ls4'].indexOf(id), 'pending'));
+    fetchAnalysis();
+  }
+
+  function goBack() {
+    state.aiData = undefined;
+    state.step = 0;
+    document.getElementById('analysisScreen').classList.remove('active');
+    document.getElementById('questionsScreen').classList.add('active');
+    renderQuestion();
+  }
+
+  // ===== NOVA HELPER =====
+  const HELPER_KNOWLEDGE = {
+    tam: {keywords:['tam','рынок','объём','размер'],answer:'TAM — общий объём рынка: максимальная выручка если занять 100%. Чем больше TAM, тем шире потенциал для роста.'},
+    cagr: {keywords:['cagr','рост','годовой'],answer:'CAGR — среднегодовой темп роста рынка. CAGR 20% означает удвоение каждые ~3.5 года. Высокий CAGR = хорошее время для входа.'},
+    ltv: {keywords:['ltv','жизненный','стоимость клиента'],answer:'LTV (Lifetime Value) — общая прибыль от клиента за всё время. Чем выше LTV, тем больше можно тратить на привлечение.'},
+    cac: {keywords:['cac','привлечение','маркетинг'],answer:'CAC — стоимость привлечения одного клиента. Здоровое соотношение LTV:CAC = 3:1 и выше.'},
+    payback: {keywords:['payback','окупаемость'],answer:'Payback — за сколько месяцев прибыль от клиента покрывает CAC. Хорошо для SaaS: 6–18 месяцев.'},
+    segment: {keywords:['segment','сегмент','smb','enterprise'],answer:'Сегментация — разделение аудитории по потребностям. SMB ценит простоту, Enterprise — надёжность. Правильный сегмент определяет всю стратегию.'},
+    gtm: {keywords:['gtm','выход','стратегия входа','продвигать'],answer:'GTM (Go-To-Market) — план выхода на рынок: кому продавать, по каким каналам, с каким позиционированием.'},
+    plg: {keywords:['plg','product-led','бесплатная'],answer:'PLG — продукт сам приводит пользователей через freemium. Снижает CAC и ускоряет рост через виральность.'},
+    freemium: {keywords:['freemium','бесплатный','платный'],answer:'Freemium — бесплатный базовый план с ограничениями. Снижает барьер входа, конвертирует через продуктовый опыт.'},
+    roi: {keywords:['roi','рентабельность','возврат'],answer:'ROI = (доход − затраты) / затраты × 100%. Для роста важен не только высокий ROI, но и скорость возврата (payback).'},
+    q1: {keywords:['q1','первый квартал','фундамент'],answer:'Q1 — квартал фундамента: гипотезы, MVP, первая воронка привлечения. Цель — первые платящие клиенты.'},
+    q2: {keywords:['q2','второй квартал'],answer:'Q2 — расширение: масштабирование каналов, улучшение конверсии на основе данных Q1.'},
+    q3: {keywords:['q3','третий квартал','монетизация'],answer:'Q3 — монетизация: оптимизация ценообразования, снижение churn, рост LTV.'},
+    q4: {keywords:['q4','четвёртый квартал','масштабирование'],answer:'Q4 — масштабирование: проверенные каналы получают больший бюджет, готовится план на следующий год.'}
+  };
+
+  function toggleHelper() {
+    const chat = document.getElementById('helperChat');
+    chat.classList.toggle('open');
+    if(chat.classList.contains('open')) document.getElementById('helperInput').focus();
+  }
+
+  function sendHelperMessage() {
+    const input = document.getElementById('helperInput');
+    const text = input.value.trim();
+    if(!text) return;
+    addHelperMessage(text, 'user');
+    input.value = '';
+    const typing = addHelperMessage('Печатает...', 'bot-typing');
+    setTimeout(() => {
+      typing.remove();
+      addHelperMessage(getLocalHelperResponse(text), 'bot');
+    }, 600);
+  }
+
+  function addHelperMessage(text, type) {
+    const msgs = document.getElementById('helperMessages');
+    const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.style.animation = 'fadeIn .25s ease';
+    if(type === 'bot' || type === 'bot-typing') {
+      msg.innerHTML = `<div class="msg-avatar">N</div><div class="msg-text">${text}</div>`;
+    } else {
+      msg.innerHTML = `<div style="flex:1;text-align:right"><div style="background:var(--gold-glow);border:1px solid var(--gold-border);padding:8px 10px;border-radius:8px;color:var(--text);display:inline-block;max-width:80%;font-size:11px">${text}</div></div>`;
+    }
+    msgs.appendChild(msg);
+    msgs.scrollTop = msgs.scrollHeight;
+    return msg;
+  }
+
+  function getLocalHelperResponse(question) {
+    const q = question.toLowerCase();
+    for(let key in HELPER_KNOWLEDGE) {
+      const kb = HELPER_KNOWLEDGE[key];
+      if(kb.keywords.some(kw => q.includes(kw))) return kb.answer;
+    }
+    if(q.includes('конкур')) return 'Конкуренты показаны в таблице раздела "Рынок". Нажми на вкладку чтобы загрузить.';
+    if(q.includes('сколько') || q.includes('бюджет')) return 'Финансовую модель NOVA формирует в разделе "Стратегия" — там инвестиции по кварталам и ROI.';
+    if(q.includes('помощь') || q.includes('не ясно')) return 'Спроси про: TAM, CAC, LTV, CAGR, ROI, PLG, freemium, GTM, стратегию Q1–Q4.';
+    return 'Интересный вопрос! Попробуй спросить про метрики (TAM, CAC, LTV), стратегию (Q1–Q4) или каналы (PLG, GTM).';
+  }
+
+  // Init
+  renderQuestion();
+</script>
 </body>
 </html>
