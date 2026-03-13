@@ -294,26 +294,26 @@ td strong{color:var(--txt)}
     </div>
     <div class="helper-input">
       <input type="text" id="helperInput" placeholder="Что-то непонятно?" onkeypress="if(event.key==='Enter'){sendHelperMessage()}">
-      <button onclick="sendHelperMessage()">Send</button>
+      <button onclick="sendHelperMessage()">Отправить</button>
     </div>
   </div>
 
   <script>
     const QUESTIONS = [
-      {id:'area',title:'Какую сферу охватываешь?',hint:'Это определяет область',type:'radio',options:['Софтвер для бизнеса','Образование','Консультирование','E-commerce','Маркетинг','Другое']},
-      {id:'segment',title:'Кто твой целевой клиент?',hint:'От этого зависит стратегия',type:'radio',options:['Эксперты','SMB (5-500)','Крупный бизнес (500+)']},
-      {id:'product',title:'Название продукта?',hint:'Рабочее название',type:'input',placeholder:'Например: MyCRM'},
-      {id:'description',title:'Описание в 1-2 предложениях',hint:'Помогает классифицировать рынок',type:'textarea',placeholder:'CRM для sales teams...'},
-      {id:'geography',title:'Географический рынок?',hint:'Локализация важна',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
-      {id:'advantages',title:'Основные преимущества?',hint:'Позиционирование',type:'multi',options:['Дешевле','Проще','Быстрее','Лучше поддержка','AI','Локализирован','Быстрый старт','Mobile','Интеграции']},
-      {id:'price',title:'Средняя стоимость?',hint:'Ценовой диапазон',type:'radio',options:['Free','Freemium','$14-50/мес','$50-200/мес','$200-1000/мес','Enterprise']}
+      {id:'area',title:'В какой сфере работает твой продукт?',hint:'Например: SaaS, мобильное приложение, онлайн-школа, интернет-магазин. Это определяет круг конкурентов.',type:'radio',options:['Софтвер для бизнеса','Образование','Консультирование','E-commerce','Маркетинг','Другое']},
+      {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь: малому бизнесу, крупным компаниям или напрямую частным лицам (B2C).',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
+      {id:'product',title:'Как называется твой продукт?',hint:'Укажи рабочее или официальное название — оно появится в итоговом отчёте.',type:'input',placeholder:'Например: MyApp'},
+      {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает. Чем точнее — тем релевантнее конкуренты.',type:'textarea',placeholder:'Например: платформа для онлайн-обучения с AI-куратором для корпоративных команд...'},
+      {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько. Конкуренты и стратегия будут адаптированы под выбранные регионы.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
+      {id:'advantages',title:'Чем ты лучше конкурентов?',hint:'Отметь ключевые преимущества. Это поможет найти слабые места конкурентов, на которые стоит давить.',type:'multi',options:['Дешевле','Проще в использовании','Быстрее внедряется','Лучше поддержка','ИИ-автоматизация','Локализован под регион','Быстрый старт','Мобильное приложение','Больше интеграций']},
+      {id:'price',title:'Какой ценовой диапазон?',hint:'Укажи стартовую цену — это влияет на сравнение с конкурентами в том же ценовом сегменте.',type:'radio',options:['Бесплатно','Freemium (есть бесплатный план)','До $50/мес','$50-200/мес','$200-1000/мес','Enterprise (договорная)']}
     ];
 
     const TABS = [
       {id:'market',emoji:'📊',title:'Рынок'},
       {id:'audience',emoji:'👤',title:'Аудитория'},
       {id:'pricing',emoji:'💰',title:'Цены и модели'},
-      {id:'channels',emoji:'📣',title:'Маркетинг и GTM'},
+      {id:'channels',emoji:'📣',title:'Маркетинг и каналы'},
       {id:'product',emoji:'🔧',title:'Продукт'},
       {id:'reputation',emoji:'⭐',title:'Репутация'},
       {id:'offers',emoji:'🎯',title:'Офферы'},
@@ -691,7 +691,7 @@ td strong{color:var(--txt)}
             <div class="rec-title">${importantRec}</div>
           </div>
 
-          <button class="btn-analysis" onclick="showModal(${idx})">📊 ПОЛНЫЙ АНАЛИЗ</button>
+          <button class="btn-analysis" onclick="showModal(${idx})">📋 ТАБЛИЦА ЦЕЛИКОМ</button>
         `;
         document.getElementById('content').innerHTML = html;
       }
