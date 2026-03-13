@@ -500,16 +500,13 @@ td strong{color:var(--txt)}
         if (!ai) {
           document.getElementById('content').innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
-              <div style="font-size:48px">⚠️</div>
-              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Стратегия не загрузилась</div>
+              <div style="font-size:48px">📋</div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Стратегия не загружена</div>
               <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
-                Не удалось получить стратегию от AI.<br>Попробуй запустить анализ ещё раз.
+                Нажми чтобы сгенерировать годовую стратегию на основе анализа конкурентов.
               </div>
-              <button onclick="retryAnalysis()" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),#85dd1f);color:var(--bg);border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
-                🔄 ПОПРОБОВАТЬ СНОВА
-              </button>
-              <button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">
-                ← Изменить данные
+              <button onclick="fetchTab('strategy')" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),var(--sky));color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
+                ⬇️ ЗАГРУЗИТЬ СТРАТЕГИЮ
               </button>
             </div>
           `;
