@@ -320,85 +320,6 @@ td strong{color:var(--txt)}
       {id:'strategy',emoji:'📋',title:'Стратегия'}
     ];
 
-    const TAB_DATA = {
-      market: {
-        headers: ['Компания','Доля рынка','Рост рынка (CAGR)','Позиция в категории','Тренд'],
-        rows: [
-          ['Salesforce','26%','13%','Enterprise CRM','→ Стабильно'],
-          ['HubSpot','12%','20%','All-in-one SMB','↑ Растёт'],
-          ['Pipedrive','5%','25%','Sales-focused','↑ Растёт'],
-          ['amoCRM','4%','30%','СНГ лидер','↑ Растёт'],
-          ['Zoho','3%','18%','Budget','→ Стабильно']
-        ],
-        summary: ['Рынок растёт на 13-30% в год','TOP 5 занимают 50% рынка','Сегмент SMB растёт быстрее всего']
-      },
-      audience: {
-        headers: ['Компания','Сегмент','Ключевые роли','Ключевая боль','Зрелость рынка'],
-        rows: [
-          ['Salesforce','Enterprise','CTO, VP Sales','Сложная настройка','Зрелый'],
-          ['HubSpot','SMB','Маркетолог, CEO','Нужно быстро стартовать','Растущий'],
-          ['Pipedrive','Sales teams','Sales Manager','Долгий онбординг','Растущий'],
-          ['amoCRM','SMB СНГ','Руководитель','Локализация и цена','Развивающийся'],
-          ['Zoho','Малый бизнес','Владелец','Высокая цена лидеров','Базовый']
-        ],
-        summary: ['SMB ищет простоту и быстрый старт','Главная боль: долгий онбординг и высокая цена','Ключевые роли: Sales Manager, CEO, маркетолог']
-      },
-      pricing: {
-        headers: ['Компания','Модель','Стартовая цена','Бесплатный тариф','Пробный период','Скидки'],
-        rows: [
-          ['Salesforce','SaaS','$165/мес','❌','30 дней','—'],
-          ['HubSpot','Freemium','$45/мес','✅ Free Forever','14 дней','30% годовая'],
-          ['Pipedrive','SaaS','$14/мес','❌','14 дней','17% годовая'],
-          ['amoCRM','SaaS','$15/мес','❌','14 дней','Партнёрские'],
-          ['Zoho','Freemium','$14/мес','✅ до 3 польз.','15 дней','20% годовая']
-        ],
-        summary: ['Freemium становится стандартом рынка','Пробный период 14-30 дней обязателен','Годовая скидка 17-30% увеличивает удержание']
-      },
-      channels: {
-        headers: ['Компания','Модель роста','Органика (SEO)','Платный трафик','Соцсети','Email-маркетинг'],
-        rows: [
-          ['Salesforce','Прямые продажи (SLG)','30%','25%','10%','15%'],
-          ['HubSpot','Контент + PLG','45%','15%','20%','10%'],
-          ['Pipedrive','PLG + Affiliate','35%','20%','25%','5%'],
-          ['amoCRM','Прямые + Партнёры','40%','30%','20%','5%'],
-          ['Zoho','PLG + Partner','38%','18%','22%','8%']
-        ],
-        summary: ['Органика — главный канал (30-45%)','PLG снижает стоимость привлечения','Соцсети растут как канал у всех игроков']
-      },
-      product: {
-        headers: ['Компания','Ключевые функции','ИИ-автоматизация','Кол-во интеграций','Моб. приложение','Барьер переключения'],
-        rows: [
-          ['Salesforce','Полный набор','✅ Einstein AI','500+','✅ Native','🔴 Высокий'],
-          ['HubSpot','CRM + Маркетинг','✅ Content AI','1000+','✅ App','🟡 Средний'],
-          ['Pipedrive','Воронки продаж','⚠️ Базовый','50+','✅ App','🟢 Низкий'],
-          ['amoCRM','Продажи + чат','❌ Нет','30+','✅ App','🟢 Низкий'],
-          ['Zoho','Полный набор','❌ Нет','100+','✅ App','🟢 Низкий']
-        ],
-        summary: ['ИИ-автоматизация — обязательна в 2026','1000+ интеграций — стандарт для лидеров','Низкий барьер переключения — возможность для новых игроков']
-      },
-      reputation: {
-        headers: ['Компания','Рейтинг G2','Кол-во отзывов','Главные жалобы','Оценка поддержки','PR активность'],
-        rows: [
-          ['Salesforce','4.4/5','18K','Высокая цена','4.2/5','🔴 Высокая'],
-          ['HubSpot','4.5/5','14K','Сложность','4.5/5','🔴 Высокая'],
-          ['Pipedrive','4.3/5','8K','Ограничен','4.3/5','🟡 Средняя'],
-          ['amoCRM','4.2/5','5K','Поддержка','3.9/5','🟢 Низкая'],
-          ['Zoho','4.1/5','3K','UI/UX','3.8/5','🟢 Низкая']
-        ],
-        summary: ['Рейтинг 4.2-4.5 — рыночный стандарт','Главные жалобы: цена, онбординг, поддержка','Оценка поддержки — ключевое отличие']
-      },
-      offers: {
-        headers: ['Компания','Лид-магнит','Первое предложение','Программа лояльности','Скорость ответа'],
-        rows: [
-          ['Salesforce','Бесплатный аудит CRM','30 дней бесплатно','Salesforce+ сертификации','Чат 24/7'],
-          ['HubSpot','Бесплатный CRM навсегда','Онбординг за 1 час','HubSpot Academy','Чат + бот'],
-          ['Pipedrive','14 дней бесплатно','Онбординг-вебинар','Pipedrive Academy','Email 24 ч'],
-          ['amoCRM','Демо-доступ','Скидка 20% первый мес.','Партнёрская программа','Чат 1-2 ч'],
-          ['Zoho','Freemium 3 польз.','Настройка за 1 день','Zoho One Bundle','Email 48 ч']
-        ],
-        summary: ['Бесплатный пробный период — основной крючок','Быстрый онбординг повышает конверсию','Программы лояльности удерживают клиентов']
-      }
-    };
 
     let state = {step:0, data:{}};
 
@@ -538,80 +459,33 @@ td strong{color:var(--txt)}
 
       if(tab.id === 'strategy') {
         const ai = state.aiData && state.aiData.strategy;
-        const s = ai || {};
+
+        if (!ai) {
+          document.getElementById('content').innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
+              <div style="font-size:48px">⚠️</div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Стратегия не загрузилась</div>
+              <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
+                Не удалось получить стратегию от AI.<br>Попробуй запустить анализ ещё раз.
+              </div>
+              <button onclick="retryAnalysis()" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),#85dd1f);color:var(--bg);border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
+                🔄 ПОПРОБОВАТЬ СНОВА
+              </button>
+              <button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">
+                ← Изменить данные
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        const s = ai;
         const f = s.finance || {};
 
-        const q1html = ai ? renderStrategyQuarter('q1', s.q1 || {}, '🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ', '🔴') : `
-          <div class="summary-box">
-            <div class="summary-title" style="font-size:13px">🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ</div>
-            <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
-              <strong style="color:var(--acid)">📌 Главная цель:</strong> Создать уникальное предложение для ${geo}<br>
-              <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">HubSpot (быстрый старт) + amoCRM (локализация)</span>
-            </div>
-            <div class="summary-item">✓ <strong>Локализируй ${product}</strong> под ${geo} ($5K)</div>
-            <div class="summary-item">  └ Касса, платежи, ЯП, обозначения</div>
-            <div class="summary-item">✓ <strong>Оптимизируй для ${segment}</strong> ($8K)</div>
-            <div class="summary-item">  └ UI/UX, документация, видео-обучение</div>
-            <div class="summary-item">✓ <strong>Встрой AI ассистента</strong> ($15K)</div>
-            <div class="summary-item">  └ ChatGPT интеграция, автоматизация</div>
-            <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> +40% конверсии, +$300K ARR, -30% CAC
-            </div>
-          </div>`;
-
-        const q2html = ai ? renderStrategyQuarter('q2', s.q2 || {}, '🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ', '🟡') : `
-          <div class="summary-box">
-            <div class="summary-title" style="font-size:13px">🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ</div>
-            <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
-              <strong style="color:var(--acid)">📌 Главная цель:</strong> Масштабировать через PLG и контент<br>
-              <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">HubSpot (Content) + Pipedrive (PLG)</span>
-            </div>
-            <div class="summary-item">✓ <strong>Запусти PLG стратегию</strong> ($10K)</div>
-            <div class="summary-item">  └ Free trial 14 дней, guided onboarding</div>
-            <div class="summary-item">✓ <strong>Content Marketing</strong> ($8K/мес)</div>
-            <div class="summary-item">  └ Blog (50 постов), YouTube (10 видео)</div>
-            <div class="summary-item">✓ <strong>Интеграции Slack/Teams</strong> ($10K)</div>
-            <div class="summary-item">  └ Native бот, уведомления, синхронизация</div>
-            <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> -50% CAC, +100K visitors, +25% signup
-            </div>
-          </div>`;
-
-        const q3html = ai ? renderStrategyQuarter('q3', s.q3 || {}, '🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ', '🟡') : `
-          <div class="summary-box">
-            <div class="summary-title" style="font-size:13px">🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ</div>
-            <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
-              <strong style="color:var(--acid)">📌 Главная цель:</strong> Увеличить LTV и доступность<br>
-              <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">HubSpot (Freemium) + Salesforce (Enterprise)</span>
-            </div>
-            <div class="summary-item">✓ <strong>Freemium план</strong> ($3K)</div>
-            <div class="summary-item">  └ Бесплатный уровень для SMB</div>
-            <div class="summary-item">✓ <strong>SOC2 сертификация</strong> ($8K)</div>
-            <div class="summary-item">  └ Обязательно для Enterprise</div>
-            <div class="summary-item">✓ <strong>Enterprise план</strong> ($2K)</div>
-            <div class="summary-item">  └ Custom интеграции, SSO, поддержка 24/7</div>
-            <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> +60% free users, +$500K Enterprise ARR, LTV/CAC = 12x
-            </div>
-          </div>`;
-
-        const q4html = ai ? renderStrategyQuarter('q4', s.q4 || {}, '🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ', '🟢') : `
-          <div class="summary-box">
-            <div class="summary-title" style="font-size:13px">🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ</div>
-            <div style="font-size:10px;color:var(--txt2);line-height:1.8;margin-bottom:8px">
-              <strong style="color:var(--acid)">📌 Главная цель:</strong> Захватить нишу, подготовить год 2<br>
-              <strong style="color:var(--acid)">👤 Учись у:</strong> <span style="color:var(--sky)">Pipedrive (Affiliate) + Zoho (Mobile)</span>
-            </div>
-            <div class="summary-item">✓ <strong>Affiliate Program</strong> ($2K)</div>
-            <div class="summary-item">  └ 20 партнёров, 20-30% комиссия</div>
-            <div class="summary-item">✓ <strong>Native мобильное приложение</strong> ($25K)</div>
-            <div class="summary-item">  └ iOS + Android, offline режим</div>
-            <div class="summary-item">✓ <strong>PR & медиа в ${geo}</strong> ($10K)</div>
-            <div class="summary-item">  └ TechCrunch, Forbes, местные издания</div>
-            <div style="background:rgba(65,200,255,.05);border-left:2px solid var(--sky);padding:8px;border-radius:4px;margin-top:8px;font-size:10px">
-              <strong style="color:var(--acid)">📊 Метрики:</strong> +40% mobile adoption, +$150K ARR из affiliate
-            </div>
-          </div>`;
+        const q1html = renderStrategyQuarter('q1', s.q1 || {}, '🔴 Q1 (Месяц 1-3): ФУНДАМЕНТ', '🔴');
+        const q2html = renderStrategyQuarter('q2', s.q2 || {}, '🟡 Q2 (Месяц 4-6): РАСШИРЕНИЕ', '🟡');
+        const q3html = renderStrategyQuarter('q3', s.q3 || {}, '🟡 Q3 (Месяц 7-9): МОНЕТИЗАЦИЯ', '🟡');
+        const q4html = renderStrategyQuarter('q4', s.q4 || {}, '🟢 Q4 (Месяц 10-12): МАСШТАБИРОВАНИЕ', '🟢');
 
         const totalInvest = f.totalInvest || '$112K';
         const arr = f.arr || '$1.5M';
@@ -652,11 +526,31 @@ td strong{color:var(--txt)}
         document.getElementById('content').innerHTML = html;
       } else {
         const aiTabData = state.aiData && state.aiData[tab.id];
-        const data = aiTabData || TAB_DATA[tab.id];
-        const bestCompany = data.bestCompany || 'HubSpot';
-        const bestAdvice = data.bestAdvice || 'лучшие практики';
-        const criticalRec = (state.aiData && state.aiData.strategy && state.aiData.strategy.criticalRec) || `Локализируйте ${product} под ${geo}`;
-        const importantRec = (state.aiData && state.aiData.strategy && state.aiData.strategy.importantRec) || `Оптимизируйте UX для ${segment}`;
+
+        if (!aiTabData) {
+          document.getElementById('content').innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80%;gap:16px;text-align:center;padding:20px">
+              <div style="font-size:48px">⚠️</div>
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--acid)">Анализ не загрузился</div>
+              <div style="font-size:11px;color:var(--txt2);max-width:320px;line-height:1.6">
+                Не удалось получить данные от AI для раздела <strong style="color:var(--txt)">${tab.emoji} ${tab.title}</strong>.<br>Попробуй запустить анализ ещё раз.
+              </div>
+              <button onclick="retryAnalysis()" style="padding:12px 28px;background:linear-gradient(135deg,var(--acid),#85dd1f);color:var(--bg);border:none;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:1px">
+                🔄 ПОПРОБОВАТЬ СНОВА
+              </button>
+              <button onclick="goBack()" style="padding:8px 20px;background:var(--bg2);color:var(--txt2);border:1px solid var(--line2);border-radius:6px;font-size:11px;cursor:pointer">
+                ← Изменить данные
+              </button>
+            </div>
+          `;
+          return;
+        }
+
+        const data = aiTabData;
+        const bestCompany = data.bestCompany || '';
+        const bestAdvice = data.bestAdvice || '';
+        const criticalRec = state.aiData.strategy && state.aiData.strategy.criticalRec;
+        const importantRec = state.aiData.strategy && state.aiData.strategy.importantRec;
 
         const tableHtml = `
           <table>
@@ -668,11 +562,11 @@ td strong{color:var(--txt)}
         const html = `
           <h2 style="color:var(--acid);margin-bottom:12px;font-size:14px">${tab.emoji} ${tab.title}</h2>
 
-          <div style="background:rgba(65,200,255,.08);border:1px solid rgba(65,200,255,.2);border-radius:8px;padding:10px;margin-bottom:14px">
+          ${bestCompany ? `<div style="background:rgba(65,200,255,.08);border:1px solid rgba(65,200,255,.2);border-radius:8px;padding:10px;margin-bottom:14px">
             <div style="font-size:10px;color:var(--txt2)">
               <strong style="color:var(--sky)">👤 Учись у ${bestCompany}:</strong> ${bestAdvice}
             </div>
-          </div>
+          </div>` : ''}
 
           <div class="table-wrapper">${tableHtml}</div>
 
@@ -681,15 +575,15 @@ td strong{color:var(--txt)}
             ${data.summary.map(s => `<div class="summary-item">• ${s}</div>`).join('')}
           </div>
 
-          <div class="rec-item">
+          ${criticalRec ? `<div class="rec-item">
             <div class="rec-pri">🔴 КРИТИЧНО</div>
             <div class="rec-title">${criticalRec}</div>
-          </div>
+          </div>` : ''}
 
-          <div class="rec-item">
+          ${importantRec ? `<div class="rec-item">
             <div class="rec-pri">🟡 ВАЖНО</div>
             <div class="rec-title">${importantRec}</div>
-          </div>
+          </div>` : ''}
 
           <button class="btn-analysis" onclick="showModal(${idx})">📋 ТАБЛИЦА ЦЕЛИКОМ</button>
         `;
@@ -699,7 +593,8 @@ td strong{color:var(--txt)}
 
     function showModal(idx) {
       const tab = TABS[idx];
-      const data = (state.aiData && state.aiData[tab.id]) || TAB_DATA[tab.id];
+      const data = state.aiData && state.aiData[tab.id];
+      if (!data) return;
       const product = state.data.product || 'Ваш продукт';
       
       document.getElementById('modalTitle').textContent = tab.emoji + ' ' + tab.title + ' для ' + product;
@@ -732,6 +627,27 @@ td strong{color:var(--txt)}
 
     function closeModal() {
       document.getElementById('modal').classList.remove('open');
+    }
+
+    function retryAnalysis() {
+      state.aiData = undefined;
+      document.getElementById('analysisScreen').classList.remove('active');
+      document.getElementById('loadingScreen').classList.add('active');
+      ['ls1','ls2','ls3','ls4'].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'loading-step';
+        el.textContent = el.textContent.replace(/^[⬜✅🔄]\s*/,'');
+        el.textContent = '⬜ ' + el.textContent;
+      });
+      fetchAnalysis();
+    }
+
+    function goBack() {
+      state.aiData = undefined;
+      state.step = 0;
+      document.getElementById('analysisScreen').classList.remove('active');
+      document.getElementById('questionsScreen').classList.add('active');
+      renderQuestion();
     }
 
     renderQuestion();
