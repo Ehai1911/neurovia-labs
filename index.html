@@ -436,6 +436,35 @@ td:first-child{color:var(--text);font-weight:500}
   th{font-size:9px;padding:9px 10px}
   td{padding:8px 10px;font-size:11px}
 }
+
+/* ===== NOVA MOBILE ===== */
+@media(max-width:768px){
+  /* Левая панель скрывается — всё в чате */
+  .nova-left{display:none}
+  .nova-right{width:100%}
+  .nova-chat-hdr{padding:12px 16px}
+  .nova-chat-title{font-size:13px}
+  .nova-chat-sub{display:none}
+  .nova-msgs{padding:14px 16px}
+  .nova-bubble{font-size:12px;max-width:85vw}
+  .nova-opts{padding:10px 14px 14px;gap:7px}
+  .nova-opt{padding:9px 13px;font-size:11px}
+  .nova-trigger{
+    width:calc(100% - 32px);left:16px;transform:none;
+    font-size:12px;padding:12px 20px;bottom:16px
+  }
+  .nova-trigger:hover{transform:none}
+  .nova-trigger.visible{display:block}
+  .nova-doc-btn{width:100%;text-align:center;padding:13px}
+}
+
+@media(max-width:480px){
+  .nova-chat-hdr{flex-direction:row;gap:8px}
+  .nova-x{padding:6px 10px;font-size:10px}
+  .nova-msgs{padding:12px}
+  .nova-opts{padding:10px 12px 12px}
+  #novaNoteInput{min-height:54px;font-size:11px}
+}
 </style>
 </head>
 <body>
