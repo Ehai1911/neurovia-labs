@@ -315,6 +315,41 @@ td:first-child{color:var(--text);font-weight:500}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
+/* ===== SWOT ===== */
+.swot-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.swot-card{border-radius:10px;padding:16px 18px;border:1px solid}
+.swot-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:11px}
+.swot-item{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:7px;display:flex;gap:7px}
+.swot-item:last-child{margin-bottom:0}
+@media(max-width:600px){.swot-grid{grid-template-columns:1fr}}
+
+/* ===== POSITIONING MAP ===== */
+.pos-map{position:relative;width:100%;aspect-ratio:4/3;max-width:580px;margin:0 auto 20px;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+.pos-line-v{position:absolute;left:50%;top:8%;bottom:8%;width:1px;background:var(--border2)}
+.pos-line-h{position:absolute;top:50%;left:8%;right:8%;height:1px;background:var(--border2)}
+.pos-label{position:absolute;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.pos-dot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px}
+.pos-dot-circle{border-radius:50%;transition:.2s}
+.pos-dot-name{font-size:9px;color:var(--text2);white-space:nowrap;font-weight:600}
+
+/* ===== QUICK WINS ===== */
+.qw-card{border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px;background:var(--surface)}
+.qw-day{font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-bottom:5px}
+.qw-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.qw-action{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:12px}
+.qw-why{font-size:11px;color:var(--muted);line-height:1.55;padding-top:11px;border-top:1px solid var(--border)}
+.qw-badges{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.qw-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:5px;border:1px solid}
+
+/* ===== GAPS ===== */
+.gap-card{border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px;background:var(--surface);display:flex;gap:16px;align-items:flex-start}
+.gap-emoji{font-size:26px;flex-shrink:0;margin-top:2px}
+.gap-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:7px}
+.gap-desc{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:11px}
+.gap-tags{display:flex;gap:8px;flex-wrap:wrap}
+.gap-tag{font-size:10px;font-weight:600;padding:3px 9px;border-radius:5px}
+@media(max-width:480px){.gap-card{flex-direction:column;gap:8px}}
+
 /* ===== NOVA SESSION ===== */
 #novaOverlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:row}
 #novaOverlay.open{display:flex}
@@ -615,7 +650,11 @@ td:first-child{color:var(--text);font-weight:500}
     {id:'product',emoji:'🔧',title:'Продукт'},
     {id:'reputation',emoji:'⭐',title:'Репутация'},
     {id:'offers',emoji:'🎯',title:'Офферы'},
-    {id:'strategy',emoji:'📋',title:'Стратегия'}
+    {id:'strategy',emoji:'📋',title:'Стратегия'},
+    {id:'swot',emoji:'🎯',title:'SWOT'},
+    {id:'positioning',emoji:'🗺️',title:'Позиционирование'},
+    {id:'quickwins',emoji:'⚡',title:'Быстрые победы'},
+    {id:'gaps',emoji:'🔍',title:'Пробелы рынка'}
   ];
 
   let state = {step:0, data:{}};
@@ -770,6 +809,15 @@ td:first-child{color:var(--text);font-weight:500}
     switchTab(TABS.findIndex(t => t.id === tabId));
   }
 
+  function noDataHtml(tab) {
+    return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;text-align:center;padding:20px">
+      <div style="font-size:36px">${tab.emoji}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text)">Раздел не загружен</div>
+      <div style="font-size:12px;color:var(--muted);max-width:300px;line-height:1.6">Нажми чтобы загрузить ${tab.emoji} ${tab.title}</div>
+      <button onclick="fetchTab('${tab.id}')" style="padding:10px 24px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">Загрузить раздел</button>
+    </div>`;
+  }
+
   function renderTabs() {
     const html = TABS.map((t,i) =>
       `<button class="tab ${i === 0 ? 'on' : ''}" onclick="switchTab(${i})">${t.emoji} ${t.title}</button>`
@@ -843,6 +891,101 @@ td:first-child{color:var(--text);font-weight:500}
         ${renderStrategyQuarter('q4',s.q4||{},'Месяцы 10–12 · Масштабирование','#34d399')}
         ${s.importantRec ? `<div class="rec-item"><div class="rec-pri">Важно</div><div class="rec-title">${s.importantRec}</div></div>` : ''}
       `;
+      return;
+    }
+
+    // ===== SWOT =====
+    if (tab.id === 'swot') {
+      const sw = state.aiData && state.aiData.swot;
+      if (!sw) { document.getElementById('content').innerHTML = noDataHtml(tab); return; }
+      const quad = (title, color, bg, items) => `
+        <div class="swot-card" style="background:${bg};border-color:${color}40">
+          <div class="swot-card-title" style="color:${color}">${title}</div>
+          ${items.map(i=>`<div class="swot-item"><span style="color:${color};flex-shrink:0">·</span>${i}</div>`).join('')}
+        </div>`;
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">🎯 SWOT · ${product}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Анализ твоего продукта на фоне конкурентов</div>
+        <div class="swot-grid">
+          ${quad('💪 Сильные стороны','#34d399','rgba(52,211,153,.04)',sw.strengths)}
+          ${quad('⚠️ Слабые стороны','#f87171','rgba(248,113,113,.04)',sw.weaknesses)}
+          ${quad('🚀 Возможности','#60a5fa','rgba(96,165,250,.04)',sw.opportunities)}
+          ${quad('⚡ Угрозы','#fbbf24','rgba(251,191,36,.04)',sw.threats)}
+        </div>`;
+      return;
+    }
+
+    // ===== POSITIONING MAP =====
+    if (tab.id === 'positioning') {
+      const pos = state.aiData && state.aiData.positioning;
+      if (!pos) { document.getElementById('content').innerHTML = noDataHtml(tab); return; }
+      const dots = pos.competitors.map(c => {
+        const left = 10 + c.x * 0.8;
+        const top = 10 + (100 - c.y) * 0.8;
+        const size = c.isClient ? 18 : 12;
+        const ring = c.isClient ? `box-shadow:0 0 0 4px ${c.color}33;` : '';
+        return `<div class="pos-dot" style="left:${left}%;top:${top}%">
+          <div class="pos-dot-circle" style="width:${size}px;height:${size}px;background:${c.color};${ring}"></div>
+          <div class="pos-dot-name" style="${c.isClient?'color:var(--gold);font-size:10px':''}">${c.name}${c.isClient?' ★':''}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">🗺️ Карта позиционирования</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Где стоят конкуренты и где твоё окно</div>
+        <div class="pos-map">
+          <div class="pos-line-v"></div>
+          <div class="pos-line-h"></div>
+          <div class="pos-label" style="top:4px;left:50%;transform:translateX(-50%)">${pos.yLabelEnd}</div>
+          <div class="pos-label" style="bottom:4px;left:50%;transform:translateX(-50%)">${pos.yLabel}</div>
+          <div class="pos-label" style="left:6px;top:50%;transform:translateY(-50%)">${pos.xLabel}</div>
+          <div class="pos-label" style="right:6px;top:50%;transform:translateY(-50%)">${pos.xLabelEnd}</div>
+          ${dots}
+        </div>
+        <div style="background:rgba(212,168,67,.08);border:1px solid var(--gold-border);border-radius:10px;padding:13px 16px;font-size:12px;color:var(--text2);line-height:1.6">${pos.insight}</div>`;
+      return;
+    }
+
+    // ===== QUICK WINS =====
+    if (tab.id === 'quickwins') {
+      const qw = state.aiData && state.aiData.quickwins;
+      if (!qw) { document.getElementById('content').innerHTML = noDataHtml(tab); return; }
+      const impactColor = {high:'#34d399', 'Высокий':'#34d399', 'Очень высокий':'#d4a843', mid:'#fbbf24', low:'#f87171'};
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">⚡ Быстрые победы</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Что сделать прямо на этой неделе</div>
+        ${qw.map(w => `
+          <div class="qw-card">
+            <div class="qw-day">${w.day}</div>
+            <div class="qw-title">${w.title}</div>
+            <div class="qw-action">${w.action}</div>
+            <div class="qw-badges">
+              <span class="qw-badge" style="color:var(--muted);border-color:var(--border2)">Усилия: ${w.effort}</span>
+              <span class="qw-badge" style="color:${impactColor[w.impact]||'#34d399'};border-color:${impactColor[w.impact]||'#34d399'}40">Эффект: ${w.impact}</span>
+            </div>
+            <div class="qw-why">💡 ${w.why}</div>
+          </div>`).join('')}`;
+      return;
+    }
+
+    // ===== MARKET GAPS =====
+    if (tab.id === 'gaps') {
+      const gaps = state.aiData && state.aiData.gaps;
+      if (!gaps) { document.getElementById('content').innerHTML = noDataHtml(tab); return; }
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">🔍 Пробелы рынка</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:18px">Чего НЕТ ни у одного конкурента — твои точки входа</div>
+        ${gaps.map(g => `
+          <div class="gap-card">
+            <div class="gap-emoji">${g.emoji}</div>
+            <div style="flex:1">
+              <div class="gap-title">${g.title}</div>
+              <div class="gap-desc">${g.description}</div>
+              <div class="gap-tags">
+                <span class="gap-tag" style="background:rgba(212,168,67,.1);color:var(--gold)">${g.opportunity}</span>
+                <span class="gap-tag" style="background:var(--surface2);color:var(--text2)">👥 ${g.who}</span>
+              </div>
+            </div>
+          </div>`).join('')}`;
       return;
     }
 
@@ -1000,7 +1143,36 @@ td:first-child{color:var(--text);font-weight:500}
       product:{headers:['Компания','Ключевые функции','AI-функции','Интеграции','Мобайл','Барьер переключения'],rows:[['Asana','Goals, Portfolio, Timeline','AI summarizer','900+','✅ хорош','🟢 Высокий'],['Monday.com','WorkOS, CRM, Dev','AI automations','200+','✅ хорош','🟢 Высокий'],['Notion','Wiki+DB+Projects','Notion AI','100+','⚠️ средний','🟡 Средний'],['Trello','Kanban, Butler','⚠️ базовый','200+','✅ хорош','🔴 Низкий'],['ClickUp','All-in-one, Docs','ClickUp AI','1000+','✅ хорош','🟡 Средний']],summary:['AI-функции стали обязательными — без них продукт выглядит устаревшим','ClickUp пытается быть всем сразу — это и преимущество, и слабость','Барьер переключения строится через данные и интеграции, не функции'],bestCompany:'Monday.com',bestAdvice:'Строй WorkOS а не таск-менеджер — платформа стоит дороже и держит клиентов'},
       reputation:{headers:['Компания','G2 рейтинг','Кол-во отзывов','Главная жалоба','Поддержка','PR-активность'],rows:[['Asana','4.3/5','9,800','Дорого для малых','4.1/5','🟢 Высокая'],['Monday.com','4.6/5','12,100','Дорого при росте','4.4/5','🟢 Высокая'],['Notion','4.7/5','5,400','Плохой оффлайн','4.2/5','🟡 Средняя'],['Trello','4.4/5','13,500','Нет аналитики','4.0/5','🟡 Средняя'],['ClickUp','4.7/5','9,200','Перегружен UI','4.3/5','🟡 Средняя']],summary:['Notion и ClickUp — лидеры G2 по рейтингу, но жалуются на сложность','Главная боль рынка: дорого при масштабировании — твоё окно','Качество поддержки важно для SMB — инвестируй в onboarding'],bestCompany:'Monday.com',bestAdvice:'Фокус на онбординге и time-to-value — 80% негатива про "сложно начать"'},
       offers:{headers:['Компания','Лид-магнит','Главный оффер','Программа лояльности','Время ответа'],rows:[['Asana','Шаблоны задач','30 дней бесплатно','Asana Together','< 4 ч'],['Monday.com','Готовые воркфлоу','14 дней + демо','Partner Program','< 2 ч'],['Notion','Бесплатный personal','AI бесплатно месяц','Notion Ambassadors','< 8 ч'],['Trello','Freemium навсегда','Power-Ups бесплатно','Atlassian Community','< 12 ч'],['ClickUp','Freemium навсегда','Скидка 45% год','Affiliate 20%','< 3 ч']],summary:['Самый сильный лид-магнит — freemium или готовые шаблоны под нишу','Партнёрская программа и комьюнити — дешёвый канал роста','Быстрый ответ поддержки (<2ч) — значимый дифференциатор для SMB'],bestCompany:'Monday.com',bestAdvice:'Создай библиотеку из 50+ отраслевых шаблонов — лучший лид-магнит для SMB'},
-      strategy:{q1:{goal:'Валидация ICP и первые 50 платящих клиентов',actions:[{title:'Запуск freemium с ограничением 3 проекта',budget:'$15K',detail:'Снизить барьер входа, собрать базу для конверсии в платный план'},{title:'SEO-контент: 20 статей под боли SMB',budget:'$8K',detail:'Таргет на "asana alternative", "monday.com vs", "task manager for SMB"'}],metrics:'50 платящих, CAC < $120, trial→paid > 8%'},q2:{goal:'Масштабирование PLG и запуск партнёрской программы',actions:[{title:'In-app онбординг и activation flow',budget:'$12K',detail:'Снизить time-to-value до 15 минут, поднять D30 retention'},{title:'Affiliate программа 25% комиссии',budget:'$5K',detail:'Рекрутировать 30 партнёров через ProductHunt и SaaS-комьюнити'}],metrics:'200 клиентов, MRR $8K, NPS > 40'},q3:{goal:'Рост MRR через апсейл и AI-функции',actions:[{title:'Запуск AI-ассистента в продукте',budget:'$20K',detail:'Автоматизация задач, AI-саммари проекта — ключевой дифференциатор'},{title:'Годовые планы со скидкой 30%',budget:'$3K',detail:'Конвертировать месячников в годовые для улучшения cash flow'}],metrics:'500 клиентов, MRR $25K, Annual plan > 40%'},q4:{goal:'Выход на $50K MRR и подготовка к Series A',actions:[{title:'Enterprise-тариф и SSO/API',budget:'$18K',detail:'Открыть upmarket — компании 100-500 человек, средний чек $200/мес'},{title:'Кейсы и PR: 5 success stories',budget:'$7K',detail:'Публикации в VC.ru, ProductHunt, Forbes — подготовка к раунду'}],metrics:'MRR $50K, ARR $600K, Churn < 3%'},finance:{totalInvest:'$88K',arr:'$600K',payback:'14 мес',roi:'580%'},criticalRec:'Запусти freemium в первый месяц — каждая неделя без него = потерянные пользователи конкурентам',importantRec:'AI-функции обязательны до конца Q2 — рынок уже ожидает их как базовую функциональность'}
+      strategy:{q1:{goal:'Валидация ICP и первые 50 платящих клиентов',actions:[{title:'Запуск freemium с ограничением 3 проекта',budget:'$15K',detail:'Снизить барьер входа, собрать базу для конверсии в платный план'},{title:'SEO-контент: 20 статей под боли SMB',budget:'$8K',detail:'Таргет на "asana alternative", "monday.com vs", "task manager for SMB"'}],metrics:'50 платящих, CAC < $120, trial→paid > 8%'},q2:{goal:'Масштабирование PLG и запуск партнёрской программы',actions:[{title:'In-app онбординг и activation flow',budget:'$12K',detail:'Снизить time-to-value до 15 минут, поднять D30 retention'},{title:'Affiliate программа 25% комиссии',budget:'$5K',detail:'Рекрутировать 30 партнёров через ProductHunt и SaaS-комьюнити'}],metrics:'200 клиентов, MRR $8K, NPS > 40'},q3:{goal:'Рост MRR через апсейл и AI-функции',actions:[{title:'Запуск AI-ассистента в продукте',budget:'$20K',detail:'Автоматизация задач, AI-саммари проекта — ключевой дифференциатор'},{title:'Годовые планы со скидкой 30%',budget:'$3K',detail:'Конвертировать месячников в годовые для улучшения cash flow'}],metrics:'500 клиентов, MRR $25K, Annual plan > 40%'},q4:{goal:'Выход на $50K MRR и подготовка к Series A',actions:[{title:'Enterprise-тариф и SSO/API',budget:'$18K',detail:'Открыть upmarket — компании 100-500 человек, средний чек $200/мес'},{title:'Кейсы и PR: 5 success stories',budget:'$7K',detail:'Публикации в VC.ru, ProductHunt, Forbes — подготовка к раунду'}],metrics:'MRR $50K, ARR $600K, Churn < 3%'},finance:{totalInvest:'$88K',arr:'$600K',payback:'14 мес',roi:'580%'},criticalRec:'Запусти freemium в первый месяц — каждая неделя без него = потерянные пользователи конкурентам',importantRec:'AI-функции обязательны до конца Q2 — рынок уже ожидает их как базовую функциональность'},
+      swot:{
+        strengths:['AI-ассистент как core feature — конкуренты добавляют AI поверх старого продукта','Фокус на SMB — Asana и Monday уходят в Enterprise, сегмент недообслужен','Быстрый онбординг — главная жалоба на конкурентов "сложно начать"','Цена не растёт при масштабировании — ключевой pain всего рынка'],
+        weaknesses:['Нет brand awareness — конкуренты известны, FlowDesk только стартует','Маленькая база интеграций vs 1000+ у ClickUp','Нет community и ecosystem как у Notion','Нет кейсов и социального доказательства (отзывы, логотипы клиентов)'],
+        opportunities:['SMB недоволен ростом цен при масштабировании — незакрытая ниша','AI-функции становятся стандартом — кто первый внедрит правильно, выиграет','СНГ-рынок — конкуренты слабо локализованы ни языком, ни ценой','Онбординг под конкретную индустрию — никто это целенаправленно не делает'],
+        threats:['ClickUp агрессивно снижает цены и копирует функции конкурентов','Notion расширяется в PM — размывает границы категории','Рекламные бюджеты конкурентов несопоставимы ($300M+ у Monday)','Быстрое развитие AI у всех крупных игроков рынка']
+      },
+      positioning:{
+        xLabel:'Простота',xLabelEnd:'Сложность',yLabel:'SMB',yLabelEnd:'Enterprise',
+        competitors:[
+          {name:'Asana',x:65,y:75,color:'#60a5fa'},
+          {name:'Monday',x:55,y:60,color:'#a78bfa'},
+          {name:'Notion',x:40,y:30,color:'#34d399'},
+          {name:'Trello',x:18,y:20,color:'#f87171'},
+          {name:'ClickUp',x:82,y:52,color:'#fbbf24'},
+          {name:'FlowDesk',x:32,y:27,color:'#d4a843',isClient:true}
+        ],
+        insight:'💡 Незанятая ниша: простой AI-продукт для SMB. Ни Trello (слишком прост, нет AI), ни ClickUp (слишком сложен) не занимают эту позицию целенаправленно — это твоя точка входа.'
+      },
+      quickwins:[
+        {day:'День 1–2',title:'Страницы сравнения с конкурентами',action:'Создай landing "FlowDesk vs Asana" и "FlowDesk vs Monday" — простые таблицы с преимуществами по цене, скорости и AI.',why:'Запросы "альтернатива Asana" и "Monday vs" ищут 50K+ человек в месяц. Бесплатный органический трафик.',effort:'Низкие',impact:'Высокий'},
+        {day:'День 3–4',title:'10 прямых сообщений в LinkedIn',action:'Найди операционных менеджеров SMB-компаний, напиши каждому лично: "30 дней бесплатно, помогу настроить под ваш процесс".',why:'Прямые продажи дают первых клиентов быстрее любой рекламы. Reply rate на персональные сообщения 15–20%.',effort:'Низкие',impact:'Высокий'},
+        {day:'День 5–7',title:'Запуск freemium-плана',action:'Открой бесплатный доступ с ограничением: 3 проекта, 5 пользователей. Убери барьер входа полностью.',why:'Каждая неделя без freemium — потерянные пользователи которые уходят к ClickUp или Trello.',effort:'Средние',impact:'Очень высокий'}
+      ],
+      gaps:[
+        {emoji:'💰',title:'Честная цена при росте команды',description:'Все конкуренты резко дорожают при увеличении команды. Asana: $10 → $24/чел при переходе на Business. Это главная жалоба в 40% отзывов на G2.',opportunity:'🔥 Очень высокая',who:'Весь SMB-сегмент'},
+        {emoji:'🤖',title:'AI как настоящий co-pilot, не кнопка',description:'AI у конкурентов — это "суммаризировать" и "автозаполнить поле". Никто не сделал AI который реально ведёт проект: предупреждает о рисках, перераспределяет задачи.',opportunity:'🔥 Очень высокая',who:'Tech-компании, стартапы'},
+        {emoji:'🌍',title:'Продукт адаптированный для СНГ',description:'Notion и Asana не адаптированы: нет рублёвых/тенговых цен, слабая поддержка, нет интеграций с AmoCRM, Битрикс24, 1С.',opportunity:'⚡ Высокая',who:'СНГ B2B-рынок'},
+        {emoji:'🎯',title:'Онбординг под конкретную индустрию',description:'Все дают пустой продукт и говорят "настрой сам". Никто не делает готовый воркфлоу: выбрал "Я агентство" → сразу нужная структура проектов.',opportunity:'⚡ Высокая',who:'Нишевые команды 5–50 чел'}
+      ]
     };
     document.getElementById('questionsScreen').classList.remove('active');
     document.getElementById('analysisScreen').classList.add('active');
