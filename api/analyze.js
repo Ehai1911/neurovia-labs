@@ -43,6 +43,7 @@ async function fetchTab(tab, area, segment, product, description, geo, competito
   const prompt = `Продукт: ${product} | Сфера: ${area} | Сегмент: ${segment} | География: ${geo} | Цена: ${price}
 Описание: ${description}
 ${compLine}Заполни JSON реальными данными для раздела "${tab}". Максимум 5 слов в ячейке.
+ВАЖНО: Замени все плейсхолдеры (Н1, Н2, Н3, Н4, Н5, НашПродукт) на реальные названия известных компаний-конкурентов в этой сфере. НашПродукт замени на "${product}". Используй только реальные названия компаний, не "Конкурент 1" и не другие заглушки.
 Шаблон: ${TAB_SCHEMAS[tab]}`;
 
   const isAnthropic = apiKey.startsWith('sk-ant-');
