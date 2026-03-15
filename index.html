@@ -1184,17 +1184,64 @@ td:first-child{color:var(--text);font-weight:500}
     if(chat.classList.contains('open')) document.getElementById('helperInput').focus();
   }
 
-  function sendHelperMessage() {
+  async function sendHelperMessage() {
     const input = document.getElementById('helperInput');
     const text = input.value.trim();
     if(!text) return;
     addHelperMessage(text, 'user');
     input.value = '';
     const typing = addHelperMessage('Печатает...', 'bot-typing');
-    setTimeout(() => {
-      typing.remove();
-      addHelperMessage(getLocalHelperResponse(text), 'bot');
-    }, 600);
+
+    // Build context summary from loaded tabs
+    const d = state.data || {};
+    const contextParts = [];
+    if (state.aiData) {
+      if (state.aiData.market) {
+        const rows = (state.aiData.market.rows || []).map(r => r[0]).filter(Boolean);
+        if (rows.length) contextParts.push('Конкуренты на рынке: ' + rows.join(', '));
+        if (state.aiData.market.bestAdvice) contextParts.push('Лучший совет по рынку: ' + state.aiData.market.bestAdvice);
+      }
+      if (state.aiData.strategy && state.aiData.strategy.criticalRec)
+        contextParts.push('Ключевая рекомендация: ' + state.aiData.strategy.criticalRec);
+      if (state.aiData.swot) {
+        const sw = state.aiData.swot;
+        if (sw.strengths) contextParts.push('Сильные стороны: ' + (sw.strengths[0] || ''));
+        if (sw.opportunities) contextParts.push('Главная возможность: ' + (sw.opportunities[0] || ''));
+      }
+    }
+
+    const apiKey = state.apiKey || '';
+    const isGitHubPages = window.location.hostname.includes('github.io');
+
+    if (!isGitHubPages && apiKey) {
+      try {
+        const resp = await fetch('/api/nova', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            message: text,
+            product: d.product,
+            area: d.area,
+            segment: d.segment,
+            geography: d.geography,
+            competitors: d.competitors,
+            context: contextParts.join('\n'),
+            apiKey
+          })
+        });
+        const data = await resp.json();
+        typing.remove();
+        addHelperMessage(data.reply || 'Не смогла ответить', 'bot');
+      } catch(e) {
+        typing.remove();
+        addHelperMessage('Ошибка соединения. ' + getLocalHelperResponse(text), 'bot');
+      }
+    } else {
+      setTimeout(() => {
+        typing.remove();
+        addHelperMessage(getLocalHelperResponse(text), 'bot');
+      }, 400);
+    }
   }
 
   function addHelperMessage(text, type) {

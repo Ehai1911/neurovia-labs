@@ -2,6 +2,9 @@
   "functions": {
     "api/analyze.js": {
       "maxDuration": 30
+    },
+    "api/nova.js": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
