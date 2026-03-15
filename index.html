@@ -933,6 +933,7 @@ td:first-child{color:var(--text);font-weight:500}
 
   function renderTabs() {
     const html = TABS.map((t,i) =>
+      (i === 9 ? '<div style="width:100%;height:0;border-bottom:1px solid var(--border);margin-bottom:-1px"></div>' : '') +
       `<button class="tab ${i === 0 ? 'on' : ''}" onclick="switchTab(${i})">${t.emoji} ${t.title}</button>`
     ).join('');
     document.getElementById('tabsBar').innerHTML = html;
@@ -996,7 +997,7 @@ td:first-child{color:var(--text);font-weight:500}
     if (i !== 0) return `<td>${cell}</td>`;
     const url = urlMap[cell];
     return url
-      ? `<td><a href="${url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--border)" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='inherit'">${cell}</a></td>`
+      ? `<td><a href="${url}" target="_blank" rel="noopener" title="Открыть сайт →" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--border)" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='inherit'">${cell}</a></td>`
       : `<td>${cell}</td>`;
   }
 
@@ -1094,7 +1095,7 @@ td:first-child{color:var(--text);font-weight:500}
         const ring = c.isClient ? `box-shadow:0 0 0 4px ${c.color}33;` : '';
         return `<div class="pos-dot" style="left:${left}%;top:${top}%">
           <div class="pos-dot-circle" style="width:${size}px;height:${size}px;background:${c.color};${ring}"></div>
-          <div class="pos-dot-name" style="${c.isClient?'color:var(--gold);font-size:10px':''}">${(!c.isClient && c.url) ? `<a href="${c.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;opacity:.8" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">${c.name}</a>` : c.name}${c.isClient?' ★':''}</div>
+          <div class="pos-dot-name" style="${c.isClient?'color:var(--gold);font-size:10px':''}">${(!c.isClient && c.url) ? `<a href="${c.url}" target="_blank" rel="noopener" title="Открыть сайт →" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;opacity:.8" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.8'">${c.name}</a>` : c.name}${c.isClient?' ★':''}</div>
         </div>`;
       }).join('');
       document.getElementById('content').innerHTML = `
@@ -1150,7 +1151,7 @@ td:first-child{color:var(--text);font-weight:500}
           ${chart.map(c => {
             const pct = Math.max(Math.round((parseFloat(c.start) / maxPrice) * 75) + 10, 15);
             return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
-              <div style="width:100px;font-size:11px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.url ? `<a href="${c.url}" target="_blank" rel="noopener" style="color:var(--text2);text-decoration:none;border-bottom:1px dotted var(--border)" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text2)'">${c.name}</a>` : `<span style="color:var(--text2)">${c.name}</span>`}</div>
+              <div style="width:100px;font-size:11px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.url ? `<a href="${c.url}" target="_blank" rel="noopener" title="Открыть сайт →" style="color:var(--text2);text-decoration:none;border-bottom:1px dotted var(--border)" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text2)'">${c.name}</a>` : `<span style="color:var(--text2)">${c.name}</span>`}</div>
               <div style="flex:1;background:var(--surface3);border-radius:4px;height:22px;overflow:hidden">
                 <div style="height:100%;width:${pct}%;background:${c.color}22;border-right:2px solid ${c.color};border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
                   <span style="font-size:10px;color:${c.color};font-weight:600;white-space:nowrap">$${c.start}</span>
