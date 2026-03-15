@@ -584,7 +584,7 @@ td:first-child{color:var(--text);font-weight:500}
       <div class="err-msg" id="qError"></div>
       <div class="nav-row">
         <button class="btn-back" id="prevBtn" onclick="prevStep()" style="display:none">← Назад</button>
-        <button id="demoBtn" onclick="loadDemo()" style="padding:10px 18px;border:1.5px solid var(--border2);border-radius:8px;background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s" onmouseover="this.style.borderColor='var(--gold-border)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">▶ Демо</button>
+        <button id="demoBtn" onclick="loadDemo()" style="display:none;padding:10px 18px;border:1.5px solid var(--border2);border-radius:8px;background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s" onmouseover="this.style.borderColor='var(--gold-border)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">▶ Демо</button>
         <button class="btn-next" id="nextBtn" onclick="nextStep()">ДАЛЬШЕ →</button>
       </div>
     </div>
@@ -694,7 +694,7 @@ td:first-child{color:var(--text);font-weight:500}
 <script>
   const QUESTIONS = [
     {id:'area',title:'В какой сфере работает твой продукт?',hint:'Чем точнее сфера — тем точнее подберём конкурентов. Можно написать свободно.',type:'input',placeholder:'Например: SaaS для управления задачами',examples:['SaaS / B2B-инструменты','EdTech / онлайн-обучение','FinTech / финансы','E-commerce / магазин','HR-платформа','Маркетплейс','HealthTech','PropTech / недвижимость']},
-    {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь — это влияет на выбор конкурентов и стратегию.',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
+    {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь — это влияет на выбор конкурентов и стратегию.',type:'radio',options:['Частные лица','Малый и средний бизнес','Крупный бизнес']},
     {id:'product',title:'Как называется твой продукт?',hint:'Рабочее или официальное название — оно появится в заголовке отчёта.',type:'input',placeholder:'Например: FlowDesk',examples:[]},
     {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает.',type:'textarea',placeholder:'Например: платформа для управления задачами с AI-автоматизацией для маркетинговых команд',examples:['[Название] — платформа для [кого], которая помогает [что делать]. В отличие от конкурентов — [главное преимущество].']},
     {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько — анализ и конкуренты будут адаптированы под регион.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
@@ -836,11 +836,7 @@ td:first-child{color:var(--text);font-weight:500}
           GitHub Pages не поддерживает серверные запросы к AI.<br>
           Чтобы получить <strong style="color:var(--text2)">реальный анализ</strong> — нужна версия на Vercel с подключённым API ключом.
         </div>
-        <div style="background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.2);border-radius:10px;padding:14px 20px;font-size:12px;color:var(--text2);max-width:360px;line-height:1.7">
-          А пока — посмотри как работает полный анализ в демо-режиме на примере продукта FlowDesk
-        </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <button onclick="loadDemo()" style="padding:12px 28px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">▶ Запустить демо</button>
           <button onclick="goBack()" style="padding:12px 20px;background:none;color:var(--muted);border:1.5px solid var(--border2);border-radius:9px;font-size:12px;cursor:pointer">← Изменить данные</button>
         </div>
       </div>`;
@@ -964,6 +960,23 @@ td:first-child{color:var(--text);font-weight:500}
       </div>`;
   }
 
+  function getCompetitorUrlMap() {
+    const map = {};
+    const charts = (state.aiData && state.aiData.pricing && state.aiData.pricing.chart) || [];
+    charts.forEach(c => { if(c.url) map[c.name] = c.url; });
+    const comps = (state.aiData && state.aiData.positioning && state.aiData.positioning.competitors) || [];
+    comps.forEach(c => { if(c.url && !c.isClient) map[c.name] = c.url; });
+    return map;
+  }
+
+  function linkCell(cell, i, urlMap) {
+    if (i !== 0) return `<td>${cell}</td>`;
+    const url = urlMap[cell];
+    return url
+      ? `<td><a href="${url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--border)" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='inherit'">${cell}</a></td>`
+      : `<td>${cell}</td>`;
+  }
+
   function getSourceBadges() {
     const monthYear = new Date().toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'});
     const sources = [];
@@ -1016,7 +1029,7 @@ td:first-child{color:var(--text);font-weight:500}
         <div style="margin-top:24px;padding:18px 20px;background:rgba(96,165,250,.06);border:1.5px solid rgba(96,165,250,.2);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--blue);text-transform:uppercase;margin-bottom:4px">Следующий шаг</div>
-            <div style="font-size:13px;color:var(--text);line-height:1.5">Конкурентная стратегия готова. Теперь рассчитай финансовую модель — сколько вложить, когда окупится, какой ROI.</div>
+            <div style="font-size:13px;color:var(--text);line-height:1.5">Конкурентная стратегия готова. Теперь рассчитай финансовую модель — сколько вложить, когда окупится, какая окупаемость.</div>
           </div>
           <a href="cipher_github.html" style="padding:11px 22px;background:linear-gradient(135deg,var(--blue),#3b82f6);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;text-decoration:none;white-space:nowrap;flex-shrink:0">Финансовая модель →</a>
         </div>
@@ -1161,7 +1174,7 @@ td:first-child{color:var(--text);font-weight:500}
         <div class="table-wrapper">
           <table>
             <thead><tr>${p.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-            <tbody>${p.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+            <tbody>${(()=>{const um=getCompetitorUrlMap();return p.rows.map(row=>`<tr>${row.map((c,i)=>linkCell(c,i,um)).join('')}</tr>`).join('');})()}</tbody>
           </table>
         </div>
         ${getSourceBadges()}
@@ -1254,7 +1267,7 @@ td:first-child{color:var(--text);font-weight:500}
       <div class="table-wrapper">
         <table>
           <thead><tr>${data.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-          <tbody>${data.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+          <tbody>${(()=>{const um=getCompetitorUrlMap();return data.rows.map(row=>`<tr>${row.map((c,i)=>linkCell(c,i,um)).join('')}</tr>`).join('');})()}</tbody>
         </table>
       </div>
       ${getSourceBadges()}
@@ -1418,7 +1431,7 @@ td:first-child{color:var(--text);font-weight:500}
 
   // ===== DEMO =====
   function loadDemo() {
-    state.data = {area:'SaaS для управления задачами',segment:'Малый и средний бизнес (SMB)',product:'FlowDesk',description:'Умная платформа для управления проектами и задачами с AI-ассистентом для малого бизнеса',geography:['СНГ','Европа'],competitors:'Asana, Monday.com, Notion, Trello',price:'$50-200/мес'};
+    state.data = {area:'SaaS для управления задачами',segment:'Малый и средний бизнес',product:'FlowDesk',description:'Умная платформа для управления проектами и задачами с AI-ассистентом для малого бизнеса',geography:['СНГ','Европа'],competitors:'Asana, Monday.com, Notion, Trello',price:'$50-200/мес'};
     state.competitorNames = ['Asana','Monday.com','Notion','Trello','ClickUp'];
     state.aiData = {
       market:{headers:['Компания','Доля рынка','Рост/год','Позиция','Тренд'],rows:[['Asana','18%','24%','Лидер','↑'],['Monday.com','15%','31%','Претендент','↑'],['Notion','12%','42%','Быстрорастущий','↑'],['Trello','14%','8%','Зрелый','→'],['ClickUp','11%','38%','Агрессивный','↑']],summary:['Рынок инструментов управления проектами растёт на 24% ежегодно — вход своевременный','Monday и ClickUp агрессивно теснят Asana через цену и AI-функции','Notion разрушает границу между базой знаний и управлением проектами — новая категория'],bestCompany:'Monday.com',bestAdvice:'Прозрачная цена + бесплатный триал + автоматизация без кода — ключ к малому бизнесу'},
@@ -1426,7 +1439,7 @@ td:first-child{color:var(--text);font-weight:500}
       pricing:{headers:['Компания','Модель','Старт цена','Бесплатно','Пробный период','Годовая скидка'],rows:[['Asana','За пользователя','$10.99/мес','✅ до 15 чел','30 дней','-20%'],['Monday.com','За пользователя','$9/мес','❌','14 дней','-18%'],['Notion','За пользователя','$8/мес','✅ личный','—','-20%'],['Trello','Бесплатный план','$5/мес','✅ навсегда','—','-17%'],['ClickUp','Бесплатный план','$7/мес','✅ навсегда','—','-45%']],summary:['ClickUp и Trello захватывают базу через бесплатный план — потом конвертируют в платный','Средний чек SMB $12–25/мес на пользователя — Asana выше рынка при росте команды','Годовая скидка 17–45% — стандарт: без неё клиент выбирает конкурента'],bestCompany:'ClickUp',bestAdvice:'Бесплатный план с ограничением 3 проекта + скидка 30% на год = лучшая механика конверсии на рынке',chart:[{name:'Asana',url:'https://asana.com/pricing',start:10.99,color:'#60a5fa'},{name:'Monday.com',url:'https://monday.com/pricing',start:9,color:'#a78bfa'},{name:'Notion',url:'https://notion.so/pricing',start:8,color:'#34d399'},{name:'Trello',url:'https://trello.com/pricing',start:5,color:'#f87171'},{name:'ClickUp',url:'https://clickup.com/pricing',start:7,color:'#fbbf24'}],recommendation:{model:'Freemium',freeLimit:'3 проекта, 5 пользователей',startPrice:'$9/мес',annualDiscount:'-30%',why:'Trello и ClickUp заняли "бесплатно навсегда" — туда не идём. Asana стоит $10.99 и теряет SMB при росте команды — это твоё окно. Старт $9/мес с бесплатным тиром под 3 проекта снимает барьер входа, а годовая скидка -30% (до $6.3/мес) делает тебя дешевле Asana на 42% при годовой оплате. Это конкретный аргумент для покупки.'}},
       channels:{headers:['Компания','Модель роста','Поиск','Реклама','Соцсети','Email/Контент'],rows:[['Asana','Продажи→Продукт','35%','25%','15%','25%'],['Monday.com','Через маркетинг','20%','40%','20%','20%'],['Notion','Через продукт','45%','10%','30%','15%'],['Trello','Через продукт','50%','10%','20%','20%'],['ClickUp','Продукт+Маркетинг','40%','25%','20%','15%']],summary:['Поиск и рост через продукт — самые эффективные каналы для этого рынка','Monday тратит больше всех на рекламу: $300M+ в год','Notion растёт почти органически через комьюнити и сарафанное радио'],bestCompany:'Notion',bestAdvice:'Инвестируй в поисковый контент и библиотеку шаблонов раньше платной рекламы — дешевле и долгосрочнее'},
       product:{headers:['Компания','Ключевые функции','AI-функции','Интеграции','Мобайл','Барьер переключения'],rows:[['Asana','Goals, Portfolio, Timeline','AI summarizer','900+','✅ хорош','🟢 Высокий'],['Monday.com','WorkOS, CRM, Dev','AI automations','200+','✅ хорош','🟢 Высокий'],['Notion','Wiki+DB+Projects','Notion AI','100+','⚠️ средний','🟡 Средний'],['Trello','Kanban, Butler','⚠️ базовый','200+','✅ хорош','🔴 Низкий'],['ClickUp','All-in-one, Docs','ClickUp AI','1000+','✅ хорош','🟡 Средний']],summary:['AI-функции стали обязательными — без них продукт выглядит устаревшим','ClickUp пытается быть всем сразу — это и преимущество, и слабость','Барьер переключения строится через данные и интеграции, не функции'],bestCompany:'Monday.com',bestAdvice:'Строй WorkOS а не таск-менеджер — платформа стоит дороже и держит клиентов'},
-      reputation:{headers:['Компания','G2 рейтинг','Кол-во отзывов','Главная жалоба','Поддержка','PR-активность'],rows:[['Asana','4.3/5','9,800','Дорого для малых','4.1/5','🟢 Высокая'],['Monday.com','4.6/5','12,100','Дорого при росте','4.4/5','🟢 Высокая'],['Notion','4.7/5','5,400','Плохой оффлайн','4.2/5','🟡 Средняя'],['Trello','4.4/5','13,500','Нет аналитики','4.0/5','🟡 Средняя'],['ClickUp','4.7/5','9,200','Перегружен UI','4.3/5','🟡 Средняя']],summary:['Notion и ClickUp — лидеры G2 по рейтингу, но жалуются на сложность','Главная боль рынка: дорого при масштабировании — твоё окно','Качество поддержки важно для SMB — инвестируй в onboarding'],bestCompany:'Monday.com',bestAdvice:'Фокус на онбординге и скорости до первого результата — 80% негатива про "сложно начать"'},
+      reputation:{headers:['Компания','Рейтинг G2','Кол-во отзывов','Главная жалоба','Поддержка','Медийность'],rows:[['Asana','4.3/5','9,800','Дорого для малых','4.1/5','🟢 Высокая'],['Monday.com','4.6/5','12,100','Дорого при росте','4.4/5','🟢 Высокая'],['Notion','4.7/5','5,400','Плохой оффлайн','4.2/5','🟡 Средняя'],['Trello','4.4/5','13,500','Нет аналитики','4.0/5','🟡 Средняя'],['ClickUp','4.7/5','9,200','Перегружен UI','4.3/5','🟡 Средняя']],summary:['Notion и ClickUp — лидеры G2 по рейтингу, но жалуются на сложность','Главная боль рынка: дорого при масштабировании — твоё окно','Качество поддержки важно для SMB — инвестируй в onboarding'],bestCompany:'Monday.com',bestAdvice:'Фокус на онбординге и скорости до первого результата — 80% негатива про "сложно начать"'},
       offers:{headers:['Компания','Лид-магнит','Главный оффер','Программа лояльности','Время ответа'],rows:[['Asana','Шаблоны задач','30 дней бесплатно','Asana Together','< 4 ч'],['Monday.com','Готовые воркфлоу','14 дней + демо','Партнёрская программа','< 2 ч'],['Notion','Бесплатный личный план','AI бесплатно месяц','Notion Ambassadors','< 8 ч'],['Trello','Бесплатно навсегда','Power-Ups бесплатно','Atlassian Community','< 12 ч'],['ClickUp','Бесплатно навсегда','Скидка 45% год','Партнёрка 20%','< 3 ч']],summary:['Самый сильный лид-магнит — бесплатный план или готовые шаблоны под нишу','Партнёрская программа и комьюнити — дешёвый канал роста','Быстрый ответ поддержки (до 2ч) — важный плюс для малого бизнеса'],bestCompany:'Monday.com',bestAdvice:'Создай библиотеку из 50+ отраслевых шаблонов — лучший способ привлечь малый бизнес'},
       strategy:{q1:{goal:'Найти своего клиента и получить первые 50 оплат',actions:[{title:'Запуск бесплатного тарифа с ограничением 3 проекта',detail:'Снизить барьер входа, собрать базу для конверсии в платный план'},{title:'Поисковый контент: 20 статей под боли малого бизнеса',detail:'Статьи "альтернатива Asana", "сравнение с Monday", "управление задачами для малого бизнеса"'}],metrics:'50 платящих, стоимость клиента < $120, конверсия в платный > 8%'},q2:{goal:'Запустить рост через продукт и партнёрскую программу',actions:[{title:'Онбординг внутри продукта',detail:'Первый результат за 15 минут, повысить удержание за 30 дней'},{title:'Партнёрская программа 25% комиссии',detail:'Привлечь 30 партнёров через ProductHunt и профессиональные комьюнити'}],metrics:'200 клиентов, выручка $8K/мес, индекс лояльности > 40'},q3:{goal:'Рост выручки через допродажи и AI-функции',actions:[{title:'Запуск AI-ассистента в продукте',detail:'Автоматизация задач, AI-резюме проекта — ключевой отличительный признак'},{title:'Годовые планы со скидкой 30%',detail:'Перевести клиентов с месячной на годовую оплату для стабильного денежного потока'}],metrics:'500 клиентов, выручка $25K/мес, годовых подписок > 40%'},q4:{goal:'Выйти на $50K выручки в месяц и подготовить первый раунд инвестиций',actions:[{title:'Тариф для крупных компаний с корп. авторизацией и API',detail:'Выйти в крупный сегмент — компании 100–500 человек, средний чек $200/мес'},{title:'5 историй успеха и PR',detail:'Публикации в VC.ru, ProductHunt, Forbes — подготовка к инвестиционному раунду'}],metrics:'Выручка $50K/мес, годовая $600K, отток < 3%'},criticalRec:'Запусти бесплатный тариф в первый месяц — каждая неделя без него = потерянные пользователи которые уходят к конкурентам',importantRec:'AI-функции обязательны в первые 6 месяцев — рынок уже ожидает их как базовую функциональность'},
       swot:{
@@ -1884,7 +1897,7 @@ ${Object.keys(novaState.notes).length > 0 ? `
         return `<div style="margin-bottom:10px;padding:12px 14px;background:#0f1628;border:1px solid #1e2d4a;border-radius:8px"><div style="font-size:10px;font-weight:700;color:#d4a843;text-transform:uppercase;margin-bottom:5px">${labels[i]}</div><div style="font-size:12px;color:#e2e8f5;margin-bottom:6px">${qd.goal||'—'}</div>${acts}<div style="font-size:10px;color:#5b6b8a;margin-top:6px">Метрики: ${qd.metrics||'—'}</div></div>`;
       }).join('');
       const critHtml = s.criticalRec ? `<div style="background:rgba(248,113,113,.08);border:1px solid #f87171;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#e2e8f5"><span style="font-size:9px;font-weight:700;color:#f87171;text-transform:uppercase;display:block;margin-bottom:4px">Что сделать прямо сейчас</span>${s.criticalRec}</div>` : '';
-      const ctaHtml = `<div style="margin-top:20px;padding:14px 16px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;font-size:12px;color:#a8b4cc;line-height:1.6">Следующий шаг: рассчитай финансовую модель — сколько вложить, когда окупится, какой ROI. <strong style="color:#60a5fa">→ Финансовая модель</strong></div>`;
+      const ctaHtml = `<div style="margin-top:20px;padding:14px 16px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;font-size:12px;color:#a8b4cc;line-height:1.6">Следующий шаг: рассчитай финансовую модель — сколько вложить, когда окупится, какая окупаемость. <strong style="color:#60a5fa">→ Финансовая модель</strong></div>`;
       return sec + critHtml + qHtml + ctaHtml;
     }
 
@@ -2052,6 +2065,10 @@ ${sectionsHtml}
   // Init
   renderQuestion();
   checkSavedState();
+  if (new URLSearchParams(window.location.search).get('demo') === '1') {
+    const btn = document.getElementById('demoBtn');
+    if (btn) btn.style.display = '';
+  }
 </script>
 </body>
 </html>
