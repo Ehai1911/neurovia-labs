@@ -1,5 +1,37 @@
 const https = require('https');
 
+// Jina Reader — scrapes any URL and returns clean text, free, no API key
+function fetchJina(url) {
+  return new Promise((resolve) => {
+    try {
+      const clean = url.trim().replace(/^https?:\/\//, '');
+      const req = https.request({
+        hostname: 'r.jina.ai', path: '/' + clean, method: 'GET',
+        headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text', 'User-Agent': 'Mozilla/5.0' }
+      }, (res) => {
+        let raw = '';
+        res.on('data', c => raw += c);
+        res.on('end', () => resolve(raw.substring(0, 1500)));
+      });
+      req.on('error', () => resolve(''));
+      req.setTimeout(9000, () => { req.destroy(); resolve(''); });
+      req.end();
+    } catch(e) { resolve(''); }
+  });
+}
+
+async function scrapeCompetitorUrls(urls) {
+  if (!urls || !urls.length) return '';
+  const valid = urls.filter(u => u && u.startsWith('http')).slice(0, 3);
+  if (!valid.length) return '';
+  const results = await Promise.all(valid.map(async (url) => {
+    const text = await fetchJina(url);
+    return text ? `--- ${url} ---\n${text}` : '';
+  }));
+  const combined = results.filter(Boolean).join('\n\n');
+  return combined ? `\n\nРЕАЛЬНЫЕ ДАННЫЕ С САЙТОВ КОНКУРЕНТОВ (используй их в анализе):\n${combined}` : '';
+}
+
 function httpPost(hostname, path, headers, body) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body);
@@ -35,10 +67,12 @@ const TAB_SCHEMAS = {
   gaps: `{"gaps":[{"emoji":"💰","title":"Название пробела рынка","description":"Детальное описание пробела: что не делают конкуренты и почему это проблема","opportunity":"🔥 Очень высокая","who":"Целевой сегмент"},{"emoji":"🤖","title":"Название пробела рынка","description":"Детальное описание пробела с конкретными данными","opportunity":"🔥 Очень высокая","who":"Целевой сегмент"},{"emoji":"🌍","title":"Название пробела рынка","description":"Детальное описание пробела","opportunity":"⚡ Высокая","who":"Целевой сегмент"},{"emoji":"🎯","title":"Название пробела рынка","description":"Детальное описание пробела","opportunity":"⚡ Высокая","who":"Целевой сегмент"}]}`
 };
 
-async function fetchTab(tab, area, segment, product, description, geo, competitors, price, apiKey) {
+async function fetchTab(tab, area, segment, product, description, geo, competitors, price, apiKey, urls) {
   const compLine = competitors && competitors.length
     ? `Конкуренты: ${competitors.join(', ')}\n`
     : '';
+
+  const scrapedContext = await scrapeCompetitorUrls(urls);
 
   const quickwinsExtra = tab === 'quickwins' ? `
 ВАЖНО для quickwins: давай только конкретные действия которые основатель делает сам за 1-2 дня.
@@ -57,8 +91,10 @@ async function fetchTab(tab, area, segment, product, description, geo, competito
   const prompt = `Продукт: ${product} | Сфера: ${area} | Сегмент: ${segment} | География: ${geo} | Цена: ${price}
 Описание: ${description}
 ${compLine}Заполни JSON реальными данными для раздела "${tab}". Максимум 5 слов в ячейке.
-ВАЖНО: Замени все плейсхолдеры (Н1, Н2, Н3, Н4, Н5, НашПродукт) на реальные названия известных компаний-конкурентов в этой сфере. НашПродукт замени на "${product}". Используй только реальные названия компаний, не "Конкурент 1" и не другие заглушки.${quickwinsExtra}${strategyExtra}
+ВАЖНО: Замени все плейсхолдеры (Н1, Н2, Н3, Н4, Н5, НашПродукт) на реальные названия известных компаний-конкурентов в этой сфере. НашПродукт замени на "${product}". Используй только реальные названия компаний, не "Конкурент 1" и не другие заглушки.${quickwinsExtra}${strategyExtra}${scrapedContext}
 Шаблон: ${TAB_SCHEMAS[tab]}`;
+
+  const maxTokens = scrapedContext ? 1100 : 700;
 
   const isAnthropic = apiKey.startsWith('sk-ant-');
 
@@ -68,7 +104,7 @@ ${compLine}Заполни JSON реальными данными для разд
       { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       {
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 700,
+        max_tokens: maxTokens,
         system: 'Верни ТОЛЬКО валидный JSON без markdown. Заполни реальными данными.',
         messages: [{ role: 'user', content: prompt }]
       }
@@ -87,7 +123,7 @@ ${compLine}Заполни JSON реальными данными для разд
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
-        max_tokens: 700,
+        max_tokens: maxTokens,
         response_format: { type: 'json_object' }
       }
     );
@@ -116,7 +152,7 @@ module.exports = async (req, res) => {
       return;
     }
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { area, segment, product, description, geography, competitors, price, tab, competitorNames, apiKey: clientKey } = body;
+    const { area, segment, product, description, geography, competitors, competitorUrls, price, tab, competitorNames, apiKey: clientKey } = body;
     const apiKey = (clientKey && (clientKey.startsWith('sk-ant-') || clientKey.startsWith('sk-')) && clientKey.length > 20)
       ? clientKey
       : process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY;
@@ -129,8 +165,11 @@ module.exports = async (req, res) => {
     const geo = Array.isArray(geography) ? geography.join(', ') : (geography || 'глобально');
     const targetTab = tab || 'market';
     const knownCompetitors = competitorNames || (competitors ? [competitors] : []);
+    const urlList = Array.isArray(competitorUrls)
+      ? competitorUrls
+      : (typeof competitorUrls === 'string' ? competitorUrls.split(/[\n,]+/).map(u => u.trim()).filter(Boolean) : []);
 
-    const data = await fetchTab(targetTab, area, segment, product, description, geo, knownCompetitors, price, apiKey);
+    const data = await fetchTab(targetTab, area, segment, product, description, geo, knownCompetitors, price, apiKey, urlList);
     res.status(200).json(data);
 
   } catch (error) {
