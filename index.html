@@ -116,6 +116,16 @@ textarea.fi{resize:vertical;min-height:100px;line-height:1.5;max-width:600px}
 .tbtn:hover{border-color:var(--gold-border);color:var(--gold-l)}
 .tbtn.selected{border-color:var(--gold);background:var(--gold-glow);color:var(--gold)}
 
+/* ===== ONBOARDING CHIPS ===== */
+.ex-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-width:600px}
+.ex-lbl{font-size:10px;color:var(--muted);align-self:center;white-space:nowrap}
+.ex-chip{
+  padding:4px 12px;border:1px solid var(--border2);border-radius:20px;
+  background:var(--surface2);color:var(--text2);font-size:11px;
+  cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif
+}
+.ex-chip:hover{border-color:var(--gold-border);color:var(--gold);background:var(--gold-glow)}
+
 .err-msg{font-size:11px;color:var(--red);margin-top:6px;min-height:16px}
 
 .nav-row{
@@ -456,11 +466,14 @@ td:first-child{color:var(--text);font-weight:500}
   .lp-hint{display:none}
   .ri{padding:24px 20px}
   .q-title{font-size:20px}
-  .an-header{padding:14px 16px 0}
+  .an-header{padding:10px 14px 0}
+  .an-brand{flex-wrap:wrap;row-gap:6px;margin-bottom:10px}
+  .an-product{margin-left:0;order:4;font-size:11px;flex-basis:100%}
+  .btn-export{padding:6px 10px;font-size:10px}
   .content{padding:16px}
   .fin-grid{grid-template-columns:repeat(2,1fr)}
-  .tabs-wrap{padding:0 4px}
-  .tab{padding:9px 11px;font-size:11px;gap:3px}
+  .tabs-wrap{padding:0 2px}
+  .tab{padding:9px 10px;font-size:11px;gap:3px}
 }
 
 @media(max-width:480px){
@@ -471,6 +484,11 @@ td:first-child{color:var(--text);font-weight:500}
   table{font-size:11px}
   th{font-size:9px;padding:9px 10px}
   td{padding:8px 10px;font-size:11px}
+  .an-header{padding:8px 12px 0}
+  .content{padding:12px 12px 28px}
+  .btn-export{padding:5px 9px;font-size:10px}
+  .an-brand-name{font-size:11px}
+  .tab{padding:8px 9px;font-size:10px}
 }
 
 /* ===== NEW TABS MOBILE ===== */
@@ -517,6 +535,20 @@ td:first-child{color:var(--text);font-weight:500}
   .nova-opts{padding:10px 12px 12px}
   #novaNoteInput{min-height:54px;font-size:11px}
 }
+
+/* ===== SOURCE BADGES ===== */
+.source-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:14px}
+.source-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;line-height:1.3}
+.source-chip-check{color:var(--green);font-size:10px}
+
+/* ===== EXPORT BUTTON ===== */
+.btn-export{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 14px;background:none;border:1.5px solid var(--border2);border-radius:7px;
+  color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
+  font-family:'Inter',sans-serif;white-space:nowrap;flex-shrink:0
+}
+.btn-export:hover{border-color:var(--gold-border);color:var(--gold)}
 
 /* ===== API KEY BANNER ===== */
 .api-banner{
@@ -589,6 +621,16 @@ td:first-child{color:var(--text);font-weight:500}
   </div>
 </div>
 
+<!-- RESTORE BANNER -->
+<div id="restoreBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(90deg,var(--surface),var(--surface2));border-bottom:1px solid var(--gold-border);padding:14px 24px;display:none;align-items:center;gap:14px;flex-wrap:wrap">
+  <div style="flex:1;min-width:180px">
+    <div style="font-size:12px;font-weight:600;color:var(--gold)">Найден сохранённый анализ</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px" id="restoreBannerSub"></div>
+  </div>
+  <button onclick="restoreAnalysis()" style="padding:8px 18px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif">Продолжить</button>
+  <button onclick="dismissRestore()" style="padding:8px 14px;background:none;border:1.5px solid var(--border2);border-radius:7px;color:var(--muted);font-size:12px;cursor:pointer">Начать заново</button>
+</div>
+
 <!-- LOADING SCREEN -->
 <div id="loadingScreen" class="screen">
   <div class="spin-ring"></div>
@@ -609,6 +651,8 @@ td:first-child{color:var(--text);font-weight:500}
       <div class="an-brand-icon">N</div>
       <div class="an-brand-name">NEUROVIA LABS</div>
       <div class="an-product" id="anProduct"></div>
+      <button class="btn-export" id="btnLoadAll" onclick="loadAllTabs()" title="Загрузить все разделы">↻ Загрузить все</button>
+      <button class="btn-export" onclick="generateFullReport()" title="Скачать полный PDF всех разделов">↓ Полный PDF</button>
     </div>
     <div class="tabs-wrap" id="tabsBar"></div>
   </div>
@@ -679,29 +723,29 @@ td:first-child{color:var(--text);font-weight:500}
 
 <script>
   const QUESTIONS = [
-    {id:'area',title:'В какой сфере работает твой продукт?',hint:'Напиши свободно: SaaS, онлайн-школа, FinTech, HR-платформа, интернет-магазин и т.д. Чем точнее — тем точнее конкуренты.',type:'input',placeholder:'Например: платформа для онлайн-обучения'},
-    {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь: малому бизнесу, крупным компаниям или напрямую частным лицам (B2C).',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
-    {id:'product',title:'Как называется твой продукт?',hint:'Укажи рабочее или официальное название — оно появится в итоговом отчёте.',type:'input',placeholder:'Например: MyApp'},
-    {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает. Чем точнее — тем релевантнее конкуренты.',type:'textarea',placeholder:'Например: платформа для онлайн-обучения с AI-куратором для корпоративных команд...'},
-    {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько. Конкуренты и стратегия будут адаптированы под выбранные регионы.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
-    {id:'competitors',title:'Кого ты уже считаешь своим конкурентом?',hint:'Необязательно, но очень важно. Перечисли 1-5 компаний которых знаешь — это резко повысит точность анализа.',type:'textarea',placeholder:'Например: Notion, Confluence, GitBook...'},
-    {id:'competitorUrls',title:'Добавь сайты конкурентов для точного анализа',hint:'Необязательно. Мы прочитаем их сайты и возьмём реальные данные — цены, функции, позиционирование. Без этого AI угадывает.',type:'textarea',placeholder:'https://notion.so\nhttps://asana.com\nhttps://monday.com'},
-    {id:'price',title:'Какой ценовой диапазон?',hint:'Укажи стартовую цену — это влияет на сравнение с конкурентами в том же ценовом сегменте.',type:'radio',options:['Бесплатно','Freemium (есть бесплатный план)','До $50/мес','$50-200/мес','$200-1000/мес','Enterprise (договорная)']}
+    {id:'area',title:'В какой сфере работает твой продукт?',hint:'Чем точнее сфера — тем точнее подберём конкурентов. Можно написать свободно.',type:'input',placeholder:'Например: SaaS для управления задачами',examples:['SaaS / B2B-инструменты','EdTech / онлайн-обучение','FinTech / финансы','E-commerce / магазин','HR-платформа','Маркетплейс','HealthTech','PropTech / недвижимость']},
+    {id:'segment',title:'Кто твой целевой клиент?',hint:'Выбери кому ты продаёшь — это влияет на выбор конкурентов и стратегию.',type:'radio',options:['B2C (частные лица)','Малый и средний бизнес (SMB)','Крупный бизнес (Enterprise)']},
+    {id:'product',title:'Как называется твой продукт?',hint:'Рабочее или официальное название — оно появится в заголовке отчёта.',type:'input',placeholder:'Например: FlowDesk',examples:[]},
+    {id:'description',title:'Кратко опиши что делает продукт',hint:'1-2 предложения: что это, для кого и какую проблему решает.',type:'textarea',placeholder:'Например: платформа для управления задачами с AI-автоматизацией для маркетинговых команд',examples:['[Название] — платформа для [кого], которая помогает [что делать]. В отличие от конкурентов — [главное преимущество].']},
+    {id:'geography',title:'На каких рынках работаешь?',hint:'Выбери один или несколько — анализ и конкуренты будут адаптированы под регион.',type:'multi',options:['Казахстан','СНГ','Европа','США','Азия','Глобально']},
+    {id:'competitors',title:'Кого ты уже считаешь своим конкурентом?',hint:'Необязательно, но повышает точность. Оставь пустым — AI найдёт сам.',type:'textarea',placeholder:'Например: Notion, Confluence, GitBook...',examples:['Notion, Confluence, GitBook','Asana, Monday.com, Trello','Figma, Sketch, Canva','Slack, Teams, Discord','Shopify, WooCommerce, Tilda']},
+    {id:'competitorUrls',title:'Добавь сайты конкурентов для точного анализа',hint:'Необязательно. Мы прочитаем их сайты напрямую — цены, функции, позиционирование. По одному URL на строку.',type:'textarea',placeholder:'https://notion.so\nhttps://asana.com\nhttps://monday.com',examples:[]},
+    {id:'price',title:'Какой ценовой диапазон?',hint:'Укажи стартовую цену — это влияет на сравнение с конкурентами в том же сегменте.',type:'radio',options:['Бесплатно','Freemium (есть бесплатный план)','До $50/мес','$50-200/мес','$200-1000/мес','Enterprise (договорная)']}
   ];
 
   const STEP_NAMES = ['Сфера продукта','Целевой клиент','Название','Описание','Рынки','Конкуренты','Сайты','Ценообразование'];
 
   const TABS = [
     {id:'market',emoji:'📊',title:'Рынок'},
+    {id:'positioning',emoji:'🗺️',title:'Позиционирование'},
+    {id:'swot',emoji:'🎲',title:'SWOT'},
     {id:'audience',emoji:'👤',title:'Аудитория'},
     {id:'pricing',emoji:'💰',title:'Цены и модели'},
-    {id:'channels',emoji:'📣',title:'Маркетинг'},
     {id:'product',emoji:'🔧',title:'Продукт'},
+    {id:'channels',emoji:'📣',title:'Маркетинг'},
     {id:'reputation',emoji:'⭐',title:'Репутация'},
     {id:'offers',emoji:'🎯',title:'Офферы'},
     {id:'strategy',emoji:'📋',title:'Стратегия'},
-    {id:'swot',emoji:'🎯',title:'SWOT'},
-    {id:'positioning',emoji:'🗺️',title:'Позиционирование'},
     {id:'quickwins',emoji:'⚡',title:'Быстрые победы'},
     {id:'gaps',emoji:'🔍',title:'Пробелы рынка'}
   ];
@@ -758,20 +802,42 @@ td:first-child{color:var(--text);font-weight:500}
         `<button class="q-option ${state.data[q.id] === o ? 'selected' : ''}" onclick="select('${q.id}', '${o}')">${o}</button>`
       ).join('')}</div>`;
     } else if(q.type === 'input') {
-      html = `<input type="text" class="fi" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" oninput="updateText('${q.id}', this.value)">`;
+      html = `<input type="text" class="fi" id="fi_${q.id}" placeholder="${q.placeholder}" value="${state.data[q.id] || ''}" oninput="updateText('${q.id}', this.value)">`;
     } else if(q.type === 'textarea') {
-      html = `<textarea class="fi" placeholder="${q.placeholder}" oninput="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
+      html = `<textarea class="fi" id="fi_${q.id}" placeholder="${q.placeholder}" oninput="updateText('${q.id}', this.value)">${state.data[q.id] || ''}</textarea>`;
     } else if(q.type === 'multi') {
       const selected = state.data[q.id] || [];
       html = `<div class="q-multi-grid">${q.options.map(o =>
         `<button class="tbtn ${selected.includes(o) ? 'selected' : ''}" onclick="toggleMulti('${q.id}', '${o}')">${o}</button>`
       ).join('')}</div>`;
     }
+    // Example chips under input/textarea
+    if (q.examples && q.examples.length) {
+      const isAppend = q.id === 'competitorUrls' || q.id === 'competitors';
+      html += `<div class="ex-row">
+        <span class="ex-lbl">${q.id === 'description' ? 'Шаблон:' : 'Примеры:'}</span>
+        ${q.examples.map(e => {
+          const safe = e.replace(/'/g,"&#39;");
+          return `<button class="ex-chip" onclick="fillExample('${q.id}','${safe}',${isAppend})">${e}</button>`;
+        }).join('')}
+      </div>`;
+    }
     document.getElementById('qAnswers').innerHTML = html;
   }
 
   function select(id, val) {state.data[id] = val; renderQuestion();}
   function updateText(id, val) {state.data[id] = val;}
+  function fillExample(id, val, append) {
+    if (append) {
+      const existing = (state.data[id] || '').trim();
+      state.data[id] = existing ? existing + '\n' + val : val;
+    } else {
+      state.data[id] = val;
+    }
+    renderQuestion();
+    // focus the input after fill
+    setTimeout(() => { const el = document.getElementById('fi_' + id); if(el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; } }, 50);
+  }
   function toggleMulti(id, val) {
     if(!state.data[id]) state.data[id] = [];
     const arr = state.data[id];
@@ -814,7 +880,7 @@ td:first-child{color:var(--text);font-weight:500}
         <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text)">Эта версия только для демо</div>
         <div style="font-size:13px;color:var(--muted);max-width:380px;line-height:1.7">
           GitHub Pages не поддерживает серверные запросы к AI.<br>
-          Чтобы получить <strong style="color:var(--text2)">реальный анализ</strong> — нужна версия на Netlify с подключённым API ключом.
+          Чтобы получить <strong style="color:var(--text2)">реальный анализ</strong> — нужна версия на Vercel с подключённым API ключом.
         </div>
         <div style="background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.2);border-radius:10px;padding:14px 20px;font-size:12px;color:var(--text2);max-width:360px;line-height:1.7">
           А пока — посмотри как работает полный анализ в демо-режиме на примере продукта FlowDesk
@@ -848,21 +914,23 @@ td:first-child{color:var(--text);font-weight:500}
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({...state.data, tab: 'market'})
+        body: JSON.stringify({...state.data, tab: 'market', apiKey: state.apiKey || undefined})
       });
       clearTimeout(t1); clearTimeout(t2);
       setLoadingStep(0, 'done'); setLoadingStep(1, 'done');
       setLoadingStep(2, 'active');
-      if (!response.ok) throw new Error('API error ' + response.status);
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'API error ' + response.status);
+      if (data && data.error) throw new Error(data.error);
       setLoadingStep(2, 'done'); setLoadingStep(3, 'done');
       if (data && data.market) {
         if (!state.aiData) state.aiData = {};
         state.aiData.market = data.market;
         if (data.competitors) state.competitorNames = data.competitors;
+        saveToStorage();
       } else {
         state.aiData = null;
-        state.lastError = 'Нет данных в ответе';
+        state.lastError = 'Сервер не вернул данные — попробуй снова';
       }
     } catch (e) {
       clearTimeout(t1); clearTimeout(t2);
@@ -893,9 +961,11 @@ td:first-child{color:var(--text);font-weight:500}
       });
       if (!response.ok) throw new Error('API error ' + response.status);
       const data = await response.json();
+      if (data && data.error) throw new Error(data.error);
       if (data && data[tabId]) {
         if (!state.aiData) state.aiData = {};
         state.aiData[tabId] = data[tabId];
+        saveToStorage();
       }
     } catch (e) {
       state.lastError = e.message;
@@ -927,7 +997,6 @@ td:first-child{color:var(--text);font-weight:500}
           <div class="q-action-title">${a.title}</div>
           <div class="q-action-detail">${a.detail}</div>
         </div>
-        <div class="q-action-budget">${a.budget}</div>
       </div>`).join('');
     return `
       <div class="q-card">
@@ -939,6 +1008,20 @@ td:first-child{color:var(--text);font-weight:500}
         ${actions}
         <div class="q-metrics"><span>Как понять что план выполнен:</span> ${data.metrics || '—'}</div>
       </div>`;
+  }
+
+  function getSourceBadges() {
+    const monthYear = new Date().toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'});
+    const sources = [];
+    const urlsText = (state.data && state.data.competitorUrls) || '';
+    const lines = urlsText.split('\n').map(l => l.trim()).filter(l => l.startsWith('http'));
+    lines.slice(0, 4).forEach(url => {
+      try { sources.push(new URL(url).hostname.replace('www.', '')); } catch(e) {}
+    });
+    sources.push('Neurovia Labs · AI');
+    return `<div class="source-row">${sources.map(s =>
+      `<span class="source-chip"><span class="source-chip-check">✓</span>${s} · ${monthYear}</span>`
+    ).join('')}</div>`;
   }
 
   function switchTab(idx) {
@@ -961,7 +1044,6 @@ td:first-child{color:var(--text);font-weight:500}
         return;
       }
       const s = ai;
-      const f = s.finance || {};
       document.getElementById('content').innerHTML = `
         <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:16px">
           Стратегия для ${product}
@@ -971,19 +1053,20 @@ td:first-child{color:var(--text);font-weight:500}
           <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--red);text-transform:uppercase;margin-bottom:6px">⚡ Что сделать прямо сейчас</div>
           <div style="font-size:14px;color:var(--text);line-height:1.6">${s.criticalRec}</div>
         </div>` : ''}
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600;letter-spacing:0.5px">ФИНАНСОВЫЙ ПРОГНОЗ НА 12 МЕСЯЦЕВ</div>
-        <div class="fin-grid">
-          <div class="fin-card"><div class="fin-lbl">Вложить</div><div class="fin-val">${f.totalInvest||'—'}</div><div class="fin-sub">бюджет на год</div></div>
-          <div class="fin-card"><div class="fin-lbl">Годовая выручка</div><div class="fin-val">${f.arr||'—'}</div><div class="fin-sub">годовой прогноз</div></div>
-          <div class="fin-card"><div class="fin-lbl">Окупаемость</div><div class="fin-val">${f.payback||'—'}</div><div class="fin-sub">через сколько вернёшь</div></div>
-          <div class="fin-card"><div class="fin-lbl">Прибыль на вложения</div><div class="fin-val">${f.roi||'—'}</div><div class="fin-sub">ROI за год</div></div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin:20px 0 10px;font-weight:600;letter-spacing:0.5px">ПЛАН ПО КВАРТАЛАМ</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600;letter-spacing:0.5px">ПЛАН ПО КВАРТАЛАМ</div>
         ${renderStrategyQuarter('q1',s.q1||{},'Первые 3 месяца · Фундамент','#f87171')}
         ${renderStrategyQuarter('q2',s.q2||{},'Месяцы 4–6 · Расширение','#fbbf24')}
         ${renderStrategyQuarter('q3',s.q3||{},'Месяцы 7–9 · Монетизация','#fbbf24')}
         ${renderStrategyQuarter('q4',s.q4||{},'Месяцы 10–12 · Масштабирование','#34d399')}
         ${s.importantRec ? `<div class="rec-item"><div class="rec-pri">Важно</div><div class="rec-title">${s.importantRec}</div></div>` : ''}
+        <div style="margin-top:24px;padding:18px 20px;background:rgba(96,165,250,.06);border:1.5px solid rgba(96,165,250,.2);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--blue);text-transform:uppercase;margin-bottom:4px">Следующий шаг</div>
+            <div style="font-size:13px;color:var(--text);line-height:1.5">Конкурентная стратегия готова. Теперь рассчитай финансовую модель — сколько вложить, когда окупится, какой ROI.</div>
+          </div>
+          <a href="cipher_github.html" style="padding:11px 22px;background:linear-gradient(135deg,var(--blue),#3b82f6);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;text-decoration:none;white-space:nowrap;flex-shrink:0">Финансовая модель →</a>
+        </div>
+        ${getSourceBadges()}
       `;
       return;
     }
@@ -1005,7 +1088,8 @@ td:first-child{color:var(--text);font-weight:500}
           ${quad('⚠️ Слабые стороны','#f87171','rgba(248,113,113,.04)',sw.weaknesses)}
           ${quad('🚀 Возможности','#60a5fa','rgba(96,165,250,.04)',sw.opportunities)}
           ${quad('⚡ Угрозы','#fbbf24','rgba(251,191,36,.04)',sw.threats)}
-        </div>`;
+        </div>
+        ${getSourceBadges()}`;
       return;
     }
 
@@ -1035,7 +1119,8 @@ td:first-child{color:var(--text);font-weight:500}
           <div class="pos-label side" style="right:6px;top:50%;transform:translateY(-50%)">${pos.xLabelEnd}</div>
           ${dots}
         </div>
-        <div style="background:rgba(212,168,67,.08);border:1px solid var(--gold-border);border-radius:10px;padding:13px 16px;font-size:12px;color:var(--text2);line-height:1.6">${pos.insight}</div>`;
+        <div style="background:rgba(212,168,67,.08);border:1px solid var(--gold-border);border-radius:10px;padding:13px 16px;font-size:12px;color:var(--text2);line-height:1.6">${pos.insight}</div>
+        ${getSourceBadges()}`;
       return;
     }
 
@@ -1057,7 +1142,81 @@ td:first-child{color:var(--text);font-weight:500}
               <span class="qw-badge" style="color:${impactColor[w.impact]||'#34d399'};border-color:${impactColor[w.impact]||'#34d399'}40">Эффект: ${w.impact}</span>
             </div>
             <div class="qw-why">💡 ${w.why}</div>
-          </div>`).join('')}`;
+          </div>`).join('')}
+        ${getSourceBadges()}`;
+      return;
+    }
+
+    // ===== PRICING =====
+    if (tab.id === 'pricing') {
+      const p = state.aiData && state.aiData.pricing;
+      if (!p) { document.getElementById('content').innerHTML = noDataHtml(tab); return; }
+
+      const chart = p.chart || [];
+      const maxPrice = chart.length ? Math.max(...chart.map(c => parseFloat(c.start) || 0), 1) : 1;
+      const chartHtml = chart.length ? `
+        <div style="margin-bottom:22px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+          <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Старт цена · $/мес на пользователя</div>
+          ${chart.map(c => {
+            const pct = Math.max(Math.round((parseFloat(c.start) / maxPrice) * 75) + 10, 15);
+            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+              <div style="width:100px;font-size:11px;color:var(--text2);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</div>
+              <div style="flex:1;background:var(--surface3);border-radius:4px;height:22px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${c.color}22;border-right:2px solid ${c.color};border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px">
+                  <span style="font-size:10px;color:${c.color};font-weight:600;white-space:nowrap">$${c.start}</span>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+          <div style="height:1px;background:var(--border);margin:10px 0 10px 110px"></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:100px;font-size:11px;color:var(--gold);font-weight:600;text-align:right;flex-shrink:0">${product} ★</div>
+            <div style="font-size:11px;color:var(--muted)">← рекомендация ниже</div>
+          </div>
+        </div>` : '';
+
+      const rec = p.recommendation;
+      const recHtml = rec ? `
+        <div style="margin-top:20px;background:linear-gradient(135deg,rgba(212,168,67,.07),rgba(212,168,67,.02));border:1.5px solid var(--gold-border);border-radius:12px;padding:18px 20px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-bottom:14px">💡 Рекомендация для ${product}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Модель</div>
+              <div style="font-size:13px;color:var(--text);font-weight:600">${rec.model}</div>
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Старт цена</div>
+              <div style="font-size:13px;color:var(--gold);font-weight:700">${rec.startPrice}</div>
+            </div>
+            <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Годовая скидка</div>
+              <div style="font-size:13px;color:var(--text);font-weight:600">${rec.annualDiscount}</div>
+            </div>
+            ${rec.freeLimit ? `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 14px">
+              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Бесплатный план</div>
+              <div style="font-size:13px;color:var(--text);font-weight:600">${rec.freeLimit}</div>
+            </div>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;border-top:1px solid var(--border);padding-top:12px">${rec.why}</div>
+        </div>` : '';
+
+      document.getElementById('content').innerHTML = `
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px">💰 Цены и модели</div>
+        ${chartHtml}
+        ${p.bestCompany ? `<div class="best-company"><strong>Учись у ${p.bestCompany}:</strong> ${p.bestAdvice}</div>` : ''}
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>${p.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${p.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        </div>
+        ${getSourceBadges()}
+        <div class="summary-box">
+          <div class="summary-title">Выводы</div>
+          ${p.summary.map(s=>`<div class="summary-item">· ${s}</div>`).join('')}
+        </div>
+        ${recHtml}
+      `;
       return;
     }
 
@@ -1079,25 +1238,56 @@ td:first-child{color:var(--text);font-weight:500}
                 <span class="gap-tag" style="background:var(--surface2);color:var(--text2)">👥 ${g.who}</span>
               </div>
             </div>
-          </div>`).join('')}`;
+          </div>`).join('')}
+        ${getSourceBadges()}`;
       return;
     }
 
     const aiTabData = state.aiData && state.aiData[tab.id];
     if (!aiTabData) {
       const isMarket = tab.id === 'market';
-      document.getElementById('content').innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;text-align:center;padding:20px">
-          <div style="font-size:36px">${isMarket ? '⚠️' : '📋'}</div>
-          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text)">${isMarket ? 'Анализ не загрузился' : 'Раздел не загружен'}</div>
-          <div style="font-size:12px;color:var(--muted);max-width:300px;line-height:1.6">
-            ${isMarket ? 'Не удалось получить данные.<br>' + (state.lastError ? `<span style="color:var(--red)">${state.lastError}</span>` : '') : `Нажми чтобы загрузить ${tab.emoji} ${tab.title}`}
-          </div>
-          <button onclick="${isMarket ? 'retryAnalysis()' : `fetchTab('${tab.id}')`}" style="padding:10px 24px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">
-            ${isMarket ? 'Попробовать снова' : 'Загрузить раздел'}
-          </button>
-          ${isMarket ? `<button onclick="goBack()" style="padding:8px 18px;background:none;color:var(--muted);border:1.5px solid var(--border2);border-radius:7px;font-size:12px;cursor:pointer">← Изменить данные</button>` : ''}
-        </div>`;
+      if (isMarket) {
+        const err = state.lastError || '';
+        let errTitle = 'Не удалось получить данные';
+        let errDetail = '';
+        let errFix = '';
+        if (/401|invalid.*key|incorrect.*key/i.test(err)) {
+          errTitle = 'Неверный API ключ';
+          errDetail = 'Ключ не принят сервером. Проверь что он скопирован полностью без пробелов.';
+          errFix = '→ Вернись назад и вставь ключ заново';
+        } else if (/429|rate.?limit|quota/i.test(err)) {
+          errTitle = 'Превышен лимит запросов';
+          errDetail = 'API ключ временно заблокирован из-за слишком частых запросов.';
+          errFix = '→ Подожди 1–2 минуты и попробуй снова';
+        } else if (/500|502|503|server/i.test(err)) {
+          errTitle = 'Ошибка на стороне сервера';
+          errDetail = 'API временно недоступен. Обычно проходит через минуту.';
+          errFix = '→ Попробуй снова через минуту';
+        } else if (/нет ключа|no.*key|api key/i.test(err)) {
+          errTitle = 'API ключ не подключён';
+          errDetail = 'Для реального анализа нужен ключ Claude (sk-ant-...) или OpenAI (sk-...).';
+          errFix = '→ Вернись назад и вставь ключ в поле вверху';
+        } else if (/network|fetch|connect|econnrefused/i.test(err)) {
+          errTitle = 'Проблема с соединением';
+          errDetail = 'Не удалось подключиться к серверу. Проверь интернет.';
+          errFix = '→ Проверь соединение и попробуй снова';
+        } else if (err) {
+          errDetail = err.length > 120 ? err.substring(0, 120) + '...' : err;
+        }
+        document.getElementById('content').innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;gap:14px;text-align:center;padding:24px">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(248,113,113,.1);border:1.5px solid rgba(248,113,113,.3);display:flex;align-items:center;justify-content:center;font-size:24px">⚠️</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)">${errTitle}</div>
+            ${errDetail ? `<div style="font-size:12px;color:var(--text2);max-width:340px;line-height:1.7;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 16px">${errDetail}</div>` : ''}
+            ${errFix ? `<div style="font-size:11px;color:var(--muted)">${errFix}</div>` : ''}
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+              <button onclick="retryAnalysis()" style="padding:10px 24px;background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Syne',sans-serif">Попробовать снова</button>
+              <button onclick="goBack()" style="padding:10px 18px;background:none;color:var(--muted);border:1.5px solid var(--border2);border-radius:8px;font-size:12px;cursor:pointer">← Изменить данные</button>
+            </div>
+          </div>`;
+      } else {
+        document.getElementById('content').innerHTML = noDataHtml(tab);
+      }
       return;
     }
 
@@ -1113,6 +1303,7 @@ td:first-child{color:var(--text);font-weight:500}
           <tbody>${data.rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>
         </table>
       </div>
+      ${getSourceBadges()}
       <div class="summary-box">
         <div class="summary-title">Выводы</div>
         ${data.summary.map(s=>`<div class="summary-item">· ${s}</div>`).join('')}
@@ -1154,6 +1345,7 @@ td:first-child{color:var(--text);font-weight:500}
   }
 
   function goBack() {
+    clearStorage();
     state.aiData = undefined;
     state.step = 0;
     document.getElementById('analysisScreen').classList.remove('active');
@@ -1279,12 +1471,12 @@ td:first-child{color:var(--text);font-weight:500}
     state.aiData = {
       market:{headers:['Компания','Доля рынка','Рост/год','Позиция','Тренд'],rows:[['Asana','18%','24%','Лидер','↑'],['Monday.com','15%','31%','Претендент','↑'],['Notion','12%','42%','Быстрорастущий','↑'],['Trello','14%','8%','Зрелый','→'],['ClickUp','11%','38%','Агрессивный','↑']],summary:['Рынок инструментов управления проектами растёт на 24% ежегодно — вход своевременный','Monday и ClickUp агрессивно теснят Asana через цену и AI-функции','Notion разрушает границу между базой знаний и управлением проектами — новая категория'],bestCompany:'Monday.com',bestAdvice:'Прозрачная цена + бесплатный триал + автоматизация без кода — ключ к малому бизнесу'},
       audience:{headers:['Компания','Сегмент','Ключевые роли','Главная боль','Зрелость аудитории'],rows:[['Asana','Средний/Крупный','Менеджер проектов, Техдир','Сложный онбординг','Высокая'],['Monday.com','Малый/Средний','Операционный менеджер','Нет единой картины','Средняя'],['Notion','Малый/Через продукт','Основатель, соло-команды','Слишком гибкий = хаос','Низкая'],['Trello','Малый бизнес','Разработчики','Доска без аналитики','Высокая'],['ClickUp','Малый/Средний','Команды "всё-в-одном"','Перегруженность функций','Средняя']],summary:['Аудитория малого бизнеса хочет простоту, но с реальной аналитикой','Основатели и операционные менеджеры — главные сторонники покупки','Ключевая боль: слишком много инструментов, нет единого места'],bestCompany:'Monday.com',bestAdvice:'Целься в операционного менеджера компании 20–100 человек — он принимает решение и чувствует боль'},
-      pricing:{headers:['Компания','Модель','Старт цена','Бесплатно','Пробный период','Скидки'],rows:[['Asana','За пользователя','$10.99/мес','✅ до 15','30 дней','Годовая -20%'],['Monday.com','За пользователя','$9/мес','❌','14 дней','Годовая -18%'],['Notion','За пользователя','$8/мес','✅ личный','нет','Годовая -20%'],['Trello','Бесплатный план','$5/мес','✅ навсегда','нет','Годовая -17%'],['ClickUp','Бесплатный план','$7/мес','✅ навсегда','нет','Годовая -45%']],summary:['ClickUp и Trello захватывают базу через бесплатный план — потом переводят в платный','Средний доход с пользователя в малом бизнесе $12–25/мес','Годовая скидка 17–45% — стандарт рынка, без неё теряешь клиентов'],bestCompany:'ClickUp',bestAdvice:'Бесплатный план с ограничением по проектам + резкая скидка на год — лучшая механика конверсии'},
+      pricing:{headers:['Компания','Модель','Старт цена','Бесплатно','Пробный период','Годовая скидка'],rows:[['Asana','За пользователя','$10.99/мес','✅ до 15 чел','30 дней','-20%'],['Monday.com','За пользователя','$9/мес','❌','14 дней','-18%'],['Notion','За пользователя','$8/мес','✅ личный','—','-20%'],['Trello','Бесплатный план','$5/мес','✅ навсегда','—','-17%'],['ClickUp','Бесплатный план','$7/мес','✅ навсегда','—','-45%']],summary:['ClickUp и Trello захватывают базу через бесплатный план — потом конвертируют в платный','Средний чек SMB $12–25/мес на пользователя — Asana выше рынка при росте команды','Годовая скидка 17–45% — стандарт: без неё клиент выбирает конкурента'],bestCompany:'ClickUp',bestAdvice:'Бесплатный план с ограничением 3 проекта + скидка 30% на год = лучшая механика конверсии на рынке',chart:[{name:'Asana',start:10.99,color:'#60a5fa'},{name:'Monday.com',start:9,color:'#a78bfa'},{name:'Notion',start:8,color:'#34d399'},{name:'Trello',start:5,color:'#f87171'},{name:'ClickUp',start:7,color:'#fbbf24'}],recommendation:{model:'Freemium',freeLimit:'3 проекта, 5 пользователей',startPrice:'$9/мес',annualDiscount:'-30%',why:'Trello и ClickUp заняли "бесплатно навсегда" — туда не идём. Asana стоит $10.99 и теряет SMB при росте команды — это твоё окно. Старт $9/мес с бесплатным тиром под 3 проекта снимает барьер входа, а годовая скидка -30% (до $6.3/мес) делает тебя дешевле Asana на 42% при годовой оплате. Это конкретный аргумент для покупки.'}},
       channels:{headers:['Компания','Модель роста','Поиск','Реклама','Соцсети','Email/Контент'],rows:[['Asana','Продажи→Продукт','35%','25%','15%','25%'],['Monday.com','Через маркетинг','20%','40%','20%','20%'],['Notion','Через продукт','45%','10%','30%','15%'],['Trello','Через продукт','50%','10%','20%','20%'],['ClickUp','Продукт+Маркетинг','40%','25%','20%','15%']],summary:['Поиск и рост через продукт — самые эффективные каналы для этого рынка','Monday тратит больше всех на рекламу: $300M+ в год','Notion растёт почти органически через комьюнити и сарафанное радио'],bestCompany:'Notion',bestAdvice:'Инвестируй в поисковый контент и библиотеку шаблонов раньше платной рекламы — дешевле и долгосрочнее'},
       product:{headers:['Компания','Ключевые функции','AI-функции','Интеграции','Мобайл','Барьер переключения'],rows:[['Asana','Goals, Portfolio, Timeline','AI summarizer','900+','✅ хорош','🟢 Высокий'],['Monday.com','WorkOS, CRM, Dev','AI automations','200+','✅ хорош','🟢 Высокий'],['Notion','Wiki+DB+Projects','Notion AI','100+','⚠️ средний','🟡 Средний'],['Trello','Kanban, Butler','⚠️ базовый','200+','✅ хорош','🔴 Низкий'],['ClickUp','All-in-one, Docs','ClickUp AI','1000+','✅ хорош','🟡 Средний']],summary:['AI-функции стали обязательными — без них продукт выглядит устаревшим','ClickUp пытается быть всем сразу — это и преимущество, и слабость','Барьер переключения строится через данные и интеграции, не функции'],bestCompany:'Monday.com',bestAdvice:'Строй WorkOS а не таск-менеджер — платформа стоит дороже и держит клиентов'},
       reputation:{headers:['Компания','G2 рейтинг','Кол-во отзывов','Главная жалоба','Поддержка','PR-активность'],rows:[['Asana','4.3/5','9,800','Дорого для малых','4.1/5','🟢 Высокая'],['Monday.com','4.6/5','12,100','Дорого при росте','4.4/5','🟢 Высокая'],['Notion','4.7/5','5,400','Плохой оффлайн','4.2/5','🟡 Средняя'],['Trello','4.4/5','13,500','Нет аналитики','4.0/5','🟡 Средняя'],['ClickUp','4.7/5','9,200','Перегружен UI','4.3/5','🟡 Средняя']],summary:['Notion и ClickUp — лидеры G2 по рейтингу, но жалуются на сложность','Главная боль рынка: дорого при масштабировании — твоё окно','Качество поддержки важно для SMB — инвестируй в onboarding'],bestCompany:'Monday.com',bestAdvice:'Фокус на онбординге и скорости до первого результата — 80% негатива про "сложно начать"'},
       offers:{headers:['Компания','Лид-магнит','Главный оффер','Программа лояльности','Время ответа'],rows:[['Asana','Шаблоны задач','30 дней бесплатно','Asana Together','< 4 ч'],['Monday.com','Готовые воркфлоу','14 дней + демо','Партнёрская программа','< 2 ч'],['Notion','Бесплатный личный план','AI бесплатно месяц','Notion Ambassadors','< 8 ч'],['Trello','Бесплатно навсегда','Power-Ups бесплатно','Atlassian Community','< 12 ч'],['ClickUp','Бесплатно навсегда','Скидка 45% год','Партнёрка 20%','< 3 ч']],summary:['Самый сильный лид-магнит — бесплатный план или готовые шаблоны под нишу','Партнёрская программа и комьюнити — дешёвый канал роста','Быстрый ответ поддержки (до 2ч) — важный плюс для малого бизнеса'],bestCompany:'Monday.com',bestAdvice:'Создай библиотеку из 50+ отраслевых шаблонов — лучший способ привлечь малый бизнес'},
-      strategy:{q1:{goal:'Найти своего клиента и получить первые 50 оплат',actions:[{title:'Запуск бесплатного тарифа с ограничением 3 проекта',budget:'$15K',detail:'Снизить барьер входа, собрать базу для конверсии в платный план'},{title:'Поисковый контент: 20 статей под боли малого бизнеса',budget:'$8K',detail:'Статьи "альтернатива Asana", "сравнение с Monday", "управление задачами для малого бизнеса"'}],metrics:'50 платящих, стоимость клиента < $120, конверсия в платный > 8%'},q2:{goal:'Запустить рост через продукт и партнёрскую программу',actions:[{title:'Онбординг внутри продукта',budget:'$12K',detail:'Первый результат за 15 минут, повысить удержание за 30 дней'},{title:'Партнёрская программа 25% комиссии',budget:'$5K',detail:'Привлечь 30 партнёров через ProductHunt и профессиональные комьюнити'}],metrics:'200 клиентов, выручка $8K/мес, индекс лояльности > 40'},q3:{goal:'Рост выручки через допродажи и AI-функции',actions:[{title:'Запуск AI-ассистента в продукте',budget:'$20K',detail:'Автоматизация задач, AI-резюме проекта — ключевой отличительный признак'},{title:'Годовые планы со скидкой 30%',budget:'$3K',detail:'Перевести клиентов с месячной на годовую оплату для стабильного денежного потока'}],metrics:'500 клиентов, выручка $25K/мес, годовых подписок > 40%'},q4:{goal:'Выйти на $50K выручки в месяц и подготовить первый раунд инвестиций',actions:[{title:'Тариф для крупных компаний с корп. авторизацией и API',budget:'$18K',detail:'Выйти в крупный сегмент — компании 100–500 человек, средний чек $200/мес'},{title:'5 историй успеха и PR',budget:'$7K',detail:'Публикации в VC.ru, ProductHunt, Forbes — подготовка к инвестиционному раунду'}],metrics:'Выручка $50K/мес, годовая $600K, отток < 3%'},finance:{totalInvest:'$88K',arr:'$600K',payback:'14 мес',roi:'580%'},criticalRec:'Запусти бесплатный тариф в первый месяц — каждая неделя без него = потерянные пользователи которые уходят к конкурентам',importantRec:'AI-функции обязательны в первые 6 месяцев — рынок уже ожидает их как базовую функциональность'},
+      strategy:{q1:{goal:'Найти своего клиента и получить первые 50 оплат',actions:[{title:'Запуск бесплатного тарифа с ограничением 3 проекта',detail:'Снизить барьер входа, собрать базу для конверсии в платный план'},{title:'Поисковый контент: 20 статей под боли малого бизнеса',detail:'Статьи "альтернатива Asana", "сравнение с Monday", "управление задачами для малого бизнеса"'}],metrics:'50 платящих, стоимость клиента < $120, конверсия в платный > 8%'},q2:{goal:'Запустить рост через продукт и партнёрскую программу',actions:[{title:'Онбординг внутри продукта',detail:'Первый результат за 15 минут, повысить удержание за 30 дней'},{title:'Партнёрская программа 25% комиссии',detail:'Привлечь 30 партнёров через ProductHunt и профессиональные комьюнити'}],metrics:'200 клиентов, выручка $8K/мес, индекс лояльности > 40'},q3:{goal:'Рост выручки через допродажи и AI-функции',actions:[{title:'Запуск AI-ассистента в продукте',detail:'Автоматизация задач, AI-резюме проекта — ключевой отличительный признак'},{title:'Годовые планы со скидкой 30%',detail:'Перевести клиентов с месячной на годовую оплату для стабильного денежного потока'}],metrics:'500 клиентов, выручка $25K/мес, годовых подписок > 40%'},q4:{goal:'Выйти на $50K выручки в месяц и подготовить первый раунд инвестиций',actions:[{title:'Тариф для крупных компаний с корп. авторизацией и API',detail:'Выйти в крупный сегмент — компании 100–500 человек, средний чек $200/мес'},{title:'5 историй успеха и PR',detail:'Публикации в VC.ru, ProductHunt, Forbes — подготовка к инвестиционному раунду'}],metrics:'Выручка $50K/мес, годовая $600K, отток < 3%'},criticalRec:'Запусти бесплатный тариф в первый месяц — каждая неделя без него = потерянные пользователи которые уходят к конкурентам',importantRec:'AI-функции обязательны в первые 6 месяцев — рынок уже ожидает их как базовую функциональность'},
       swot:{
         strengths:['AI-ассистент как ключевая функция — конкуренты добавляют AI поверх старого продукта','Фокус на малом бизнесе — Asana и Monday уходят в крупный сегмент, малый недообслужен','Быстрый онбординг — главная жалоба на конкурентов "сложно начать"','Цена не растёт при масштабировании — ключевая боль всего рынка'],
         weaknesses:['Нет узнаваемости бренда — конкуренты известны, FlowDesk только стартует','Маленькая база интеграций vs 1000+ у ClickUp','Нет комьюнити и экосистемы как у Notion','Нет кейсов и социального доказательства (отзывы, логотипы клиентов)'],
@@ -1717,8 +1909,199 @@ ${Object.keys(novaState.notes).length > 0 ? `
     win.document.close();
   }
 
+  // ===== FULL PDF EXPORT =====
+  function renderTabForPdf(tab, data) {
+    const sec = `<div style="margin-top:36px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #1e2d4a"><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#e2e8f5">${tab.emoji} ${tab.title}</div></div>`;
+
+    // Table-based tabs
+    if (data && data.headers && data.rows) {
+      const tRows = data.rows.map(row =>
+        `<tr>${row.map((cell,i) => `<td style="padding:8px 10px;border-bottom:1px solid #1e2d4a;color:${i===0?'#e2e8f5':'#a8b4cc'};font-size:12px">${cell}</td>`).join('')}</tr>`
+      ).join('');
+      const best = data.bestCompany ? `<div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.22);border-radius:8px;padding:10px 13px;margin-bottom:12px;font-size:12px;color:#a8b4cc;line-height:1.5"><strong style="color:#d4a843">Учись у ${data.bestCompany}:</strong> ${data.bestAdvice}</div>` : '';
+      const summ = (data.summary||[]).map(s => `<div style="display:flex;gap:8px;font-size:12px;color:#a8b4cc;line-height:1.6;margin-bottom:4px"><span style="color:#d4a843">·</span>${s}</div>`).join('');
+      return sec + best + `<div style="overflow-x:auto;margin-bottom:12px"><table style="width:100%;border-collapse:collapse;min-width:520px"><thead><tr>${data.headers.map(h=>`<th style="padding:9px 10px;text-align:left;color:#d4a843;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #1e2d4a;background:#0f1628;white-space:nowrap">${h}</th>`).join('')}</tr></thead><tbody>${tRows}</tbody></table></div><div style="background:#0f1628;border:1px solid #1e2d4a;border-radius:8px;padding:12px 14px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#d4a843;margin-bottom:7px">Выводы</div>${summ}</div>`;
+    }
+
+    // Strategy
+    if (tab.id === 'strategy') {
+      const s = data;
+      const qHtml = ['q1','q2','q3','q4'].map((q,i) => {
+        const qd = s[q]||{}; const labels=['Первые 3 месяца','Месяцы 4–6','Месяцы 7–9','Месяцы 10–12'];
+        const acts = (qd.actions||[]).map(a=>`<div style="font-size:11px;color:#a8b4cc;margin:3px 0 3px 10px">• ${a.title} — ${a.budget}</div>`).join('');
+        return `<div style="margin-bottom:10px;padding:12px 14px;background:#0f1628;border:1px solid #1e2d4a;border-radius:8px"><div style="font-size:10px;font-weight:700;color:#d4a843;text-transform:uppercase;margin-bottom:5px">${labels[i]}</div><div style="font-size:12px;color:#e2e8f5;margin-bottom:6px">${qd.goal||'—'}</div>${acts}<div style="font-size:10px;color:#5b6b8a;margin-top:6px">Метрики: ${qd.metrics||'—'}</div></div>`;
+      }).join('');
+      const critHtml = s.criticalRec ? `<div style="background:rgba(248,113,113,.08);border:1px solid #f87171;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#e2e8f5"><span style="font-size:9px;font-weight:700;color:#f87171;text-transform:uppercase;display:block;margin-bottom:4px">Что сделать прямо сейчас</span>${s.criticalRec}</div>` : '';
+      const ctaHtml = `<div style="margin-top:20px;padding:14px 16px;background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;font-size:12px;color:#a8b4cc;line-height:1.6">Следующий шаг: рассчитай финансовую модель — сколько вложить, когда окупится, какой ROI. <strong style="color:#60a5fa">→ Финансовая модель</strong></div>`;
+      return sec + critHtml + qHtml + ctaHtml;
+    }
+
+    // SWOT
+    if (tab.id === 'swot') {
+      const sw = data;
+      const quad = (title, color, items) => `<div style="background:#0f1628;border:1px solid ${color}30;border-radius:8px;padding:12px 14px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:${color};margin-bottom:8px">${title}</div>${(items||[]).map(i=>`<div style="font-size:11px;color:#a8b4cc;line-height:1.55;margin-bottom:5px;display:flex;gap:6px"><span style="color:${color};flex-shrink:0">·</span>${i}</div>`).join('')}</div>`;
+      return sec + `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${quad('💪 Сильные стороны','#34d399',sw.strengths)}${quad('⚠️ Слабые стороны','#f87171',sw.weaknesses)}${quad('🚀 Возможности','#60a5fa',sw.opportunities)}${quad('⚡ Угрозы','#fbbf24',sw.threats)}</div>`;
+    }
+
+    // Positioning
+    if (tab.id === 'positioning') {
+      const pos = data;
+      const rows = (pos.competitors||[]).map(c=>`<tr><td style="padding:8px 10px;border-bottom:1px solid #1e2d4a;color:${c.isClient?'#d4a843':'#e2e8f5'};font-size:12px;font-weight:${c.isClient?'700':'400'}">${c.name}${c.isClient?' ★':''}</td><td style="padding:8px 10px;border-bottom:1px solid #1e2d4a;color:#a8b4cc;font-size:12px">${c.x}</td><td style="padding:8px 10px;border-bottom:1px solid #1e2d4a;color:#a8b4cc;font-size:12px">${c.y}</td></tr>`).join('');
+      return sec + `<div style="overflow-x:auto;margin-bottom:12px"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:8px 10px;text-align:left;color:#d4a843;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #1e2d4a;background:#0f1628">Компания</th><th style="padding:8px 10px;text-align:left;color:#d4a843;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #1e2d4a;background:#0f1628">X: ${pos.xLabel}–${pos.xLabelEnd}</th><th style="padding:8px 10px;text-align:left;color:#d4a843;font-size:9px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #1e2d4a;background:#0f1628">Y: ${pos.yLabel}–${pos.yLabelEnd}</th></tr></thead><tbody>${rows}</tbody></table></div><div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.22);border-radius:8px;padding:11px 14px;font-size:12px;color:#a8b4cc;line-height:1.6">${pos.insight}</div>`;
+    }
+
+    // Quickwins
+    if (tab.id === 'quickwins') {
+      const wins = Array.isArray(data) ? data : [];
+      return sec + wins.map(w=>`<div style="background:#0f1628;border:1px solid #1e2d4a;border-radius:8px;padding:14px;margin-bottom:10px"><div style="font-size:9px;font-weight:700;color:#d4a843;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">${w.day}</div><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f5;margin-bottom:6px">${w.title}</div><div style="font-size:12px;color:#a8b4cc;line-height:1.6;margin-bottom:8px">${w.action}</div><div style="font-size:11px;color:#5b6b8a;line-height:1.5;padding-top:8px;border-top:1px solid #1e2d4a">💡 ${w.why}</div></div>`).join('');
+    }
+
+    // Gaps
+    if (tab.id === 'gaps') {
+      const gaps = Array.isArray(data) ? data : [];
+      return sec + gaps.map(g=>`<div style="background:#0f1628;border:1px solid #1e2d4a;border-radius:8px;padding:14px;margin-bottom:10px;display:flex;gap:12px"><div style="font-size:22px;flex-shrink:0">${g.emoji}</div><div><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f5;margin-bottom:5px">${g.title}</div><div style="font-size:12px;color:#a8b4cc;line-height:1.6;margin-bottom:8px">${g.description}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:rgba(212,168,67,.1);color:#d4a843">${g.opportunity}</span><span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#141d35;color:#a8b4cc">👥 ${g.who}</span></div></div></div>`).join('');
+    }
+
+    return sec + '<div style="font-size:12px;color:#5b6b8a">Данные недоступны</div>';
+  }
+
+  function generateFullReport() {
+    const d = state.data || {};
+    const product = d.product || 'Анализ';
+    const date = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+    const monthYear = new Date().toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
+
+    const loadedTabs = TABS.filter(tab => state.aiData && state.aiData[tab.id]);
+    if (loadedTabs.length === 0) {
+      alert('Нет загруженных данных для экспорта. Открой хотя бы один раздел анализа.');
+      return;
+    }
+
+    const sectionsHtml = loadedTabs.map(tab => renderTabForPdf(tab, state.aiData[tab.id])).join('');
+
+    const urlDomains = ((d.competitorUrls||'').split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http'))).map(url => {
+      try { return new URL(url).hostname.replace('www.',''); } catch(e) { return null; }
+    }).filter(Boolean);
+    const allSources = [...urlDomains, 'Neurovia Labs · AI'];
+    const sourcesHtml = allSources.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#5b6b8a;background:#0f1628;border:1px solid #1e2d4a;border-radius:4px;padding:2px 7px;margin:2px"><span style="color:#34d399">✓</span>${s} · ${monthYear}</span>`).join('');
+
+    const ctxHtml = [['Продукт',d.product||'—'],['Сфера',d.area||'—'],['Сегмент',d.segment||'—'],['Рынки',Array.isArray(d.geography)?d.geography.join(', '):(d.geography||'—')],['Цена',d.price||'—']].map(([l,v])=>`<div style="background:#0f1628;border:1px solid #1e2d4a;border-radius:7px;padding:10px 12px"><div style="font-size:9px;color:#5b6b8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">${l}</div><div style="font-size:12px;color:#e2e8f5;font-weight:600">${v}</div></div>`).join('');
+
+    const tocHtml = loadedTabs.map(t=>`<span style="font-size:11px;color:#a8b4cc;background:#141d35;border:1px solid #1e2d4a;border-radius:5px;padding:3px 9px">${t.emoji} ${t.title}</span>`).join('');
+
+    const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Полный анализ · ${product} · Neurovia Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0e1a;color:#e2e8f5;font-family:'Inter',sans-serif;padding:48px;max-width:960px;margin:0 auto}@media print{body{background:#fff;color:#111}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}@page{margin:20mm}}</style>
+</head><body>
+<div class="no-print" style="position:sticky;top:0;z-index:10;background:rgba(10,14,26,.95);backdrop-filter:blur(8px);border-bottom:1px solid #1e2d4a;padding:12px 48px;display:flex;align-items:center;justify-content:space-between;margin:-48px -48px 36px -48px">
+  <div style="font-size:11px;color:#5b6b8a">Neurovia Labs · Полный отчёт · ${loadedTabs.length} разделов из ${TABS.length}</div>
+  <button onclick="window.print()" style="padding:9px 22px;background:linear-gradient(135deg,#b08830,#d4a843);color:#0a0e1a;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:.04em">↓ Сохранить как PDF</button>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #1e2d4a">
+  <div>
+    <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:#d4a843;text-transform:uppercase;margin-bottom:5px">NEUROVIA LABS · КОНКУРЕНТНЫЙ АНАЛИЗ</div>
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#e2e8f5">${product}</div>
+    <div style="font-size:12px;color:#5b6b8a;margin-top:3px">Полный отчёт · ${loadedTabs.length} разделов загружено</div>
+  </div>
+  <div style="text-align:right;font-size:11px;color:#5b6b8a"><div>${date}</div><div style="margin-top:3px">Конфиденциально</div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:20px">${ctxHtml}</div>
+<div style="margin-bottom:20px;display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+  <span style="font-size:10px;color:#5b6b8a;margin-right:4px">Источники:</span>${sourcesHtml}
+</div>
+<div style="background:#0f1628;border:1px solid #1e2d4a;border-radius:10px;padding:14px 16px;margin-bottom:32px">
+  <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#5b6b8a;margin-bottom:10px">СОДЕРЖАНИЕ</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px">${tocHtml}</div>
+</div>
+${sectionsHtml}
+<div style="margin-top:40px;padding-top:16px;border-top:1px solid #1e2d4a;display:flex;justify-content:space-between;font-size:10px;color:#5b6b8a">
+  <div>Neurovia Labs · AI-анализ конкурентов</div><div>${date}</div>
+</div>
+</body></html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+  }
+
+  // ===== LOCALSTORAGE =====
+  const STORAGE_KEY = 'neurovia_state';
+
+  function saveToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        data: state.data,
+        aiData: state.aiData,
+        competitorNames: state.competitorNames,
+        apiKey: state.apiKey,
+        savedAt: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function clearStorage() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  }
+
+  function checkSavedState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (!saved || !saved.aiData || !saved.data) return;
+      const product = saved.data.product || 'анализ';
+      const tabCount = Object.keys(saved.aiData).length;
+      document.getElementById('restoreBannerSub').textContent = product + ' · ' + tabCount + ' разделов загружено';
+      const banner = document.getElementById('restoreBanner');
+      banner.style.display = 'flex';
+      // push questions screen down
+      document.getElementById('questionsScreen').style.paddingTop = '64px';
+    } catch(e) {}
+  }
+
+  function restoreAnalysis() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      state.data = saved.data || {};
+      state.aiData = saved.aiData || {};
+      state.competitorNames = saved.competitorNames || [];
+      if (saved.apiKey) state.apiKey = saved.apiKey;
+      document.getElementById('restoreBanner').style.display = 'none';
+      document.getElementById('questionsScreen').classList.remove('active');
+      document.getElementById('analysisScreen').classList.add('active');
+      document.getElementById('anProduct').textContent = state.data.product || '';
+      renderTabs();
+    } catch(e) {}
+  }
+
+  function dismissRestore() {
+    clearStorage();
+    document.getElementById('restoreBanner').style.display = 'none';
+    document.getElementById('questionsScreen').style.paddingTop = '';
+  }
+
+  // ===== LOAD ALL TABS =====
+  async function loadAllTabs() {
+    const btn = document.getElementById('btnLoadAll');
+    const missing = TABS.filter(t => !state.aiData || !state.aiData[t.id]);
+    if (missing.length === 0) { generateFullReport(); return; }
+    btn.disabled = true;
+    btn.textContent = '↻ 0/' + missing.length;
+    for (let i = 0; i < missing.length; i++) {
+      btn.textContent = '↻ ' + (i+1) + '/' + missing.length;
+      await fetchTab(missing[i].id);
+      saveToStorage();
+    }
+    btn.disabled = false;
+    btn.textContent = '↻ Загрузить все';
+    generateFullReport();
+  }
+
   // Init
   renderQuestion();
+  checkSavedState();
 </script>
 </body>
 </html>

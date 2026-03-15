@@ -14,17 +14,55 @@ function fetchJina(url) {
         res.on('end', () => resolve(raw.substring(0, 1500)));
       });
       req.on('error', () => resolve(''));
-      req.setTimeout(9000, () => { req.destroy(); resolve(''); });
+      req.setTimeout(6000, () => { req.destroy(); resolve(''); });
       req.end();
     } catch(e) { resolve(''); }
   });
 }
 
-async function scrapeCompetitorUrls(urls) {
-  if (!urls || !urls.length) return '';
-  const valid = urls.filter(u => u && u.startsWith('http')).slice(0, 3);
-  if (!valid.length) return '';
-  const results = await Promise.all(valid.map(async (url) => {
+function getBaseUrl(url) {
+  try { return new URL(url).origin; } catch(e) { return null; }
+}
+
+// Smart per-tab scraping: pricing pages for pricing tab, G2 for reputation, homepage for others
+async function scrapeForTab(tab, urls, competitorNames) {
+  const validUrls = (urls || []).filter(u => u && u.startsWith('http')).slice(0, 3);
+
+  // PRICING TAB → scrape /pricing pages
+  if (tab === 'pricing') {
+    const pricingTargets = validUrls.map(u => {
+      const base = getBaseUrl(u);
+      return base ? base + '/pricing' : null;
+    }).filter(Boolean);
+    if (!pricingTargets.length) return '';
+    const results = await Promise.all(pricingTargets.map(async (url) => {
+      const text = await fetchJina(url);
+      return text && text.length > 150 ? `--- ${url} ---\n${text}` : '';
+    }));
+    const combined = results.filter(Boolean).join('\n\n');
+    return combined
+      ? `\n\nРЕАЛЬНЫЕ СТРАНИЦЫ ЦЕНЫ КОНКУРЕНТОВ (используй конкретные цифры цен, тарифы, условия из этих данных):\n${combined}`
+      : '';
+  }
+
+  // REPUTATION TAB → scrape G2 search for each competitor name
+  if (tab === 'reputation') {
+    const names = (competitorNames || []).slice(0, 3).filter(Boolean);
+    if (!names.length) return '';
+    const g2Urls = names.map(n => `https://www.g2.com/search?query=${encodeURIComponent(n)}`);
+    const results = await Promise.all(g2Urls.map(async (url) => {
+      const text = await fetchJina(url);
+      return text && text.length > 150 ? `--- G2: ${url} ---\n${text}` : '';
+    }));
+    const combined = results.filter(Boolean).join('\n\n');
+    return combined
+      ? `\n\nРЕАЛЬНЫЕ ДАННЫЕ G2 О КОНКУРЕНТАХ (используй реальные рейтинги, количество отзывов и жалобы из этих данных):\n${combined}`
+      : '';
+  }
+
+  // ALL OTHER TABS → scrape provided homepages as before
+  if (!validUrls.length) return '';
+  const results = await Promise.all(validUrls.map(async (url) => {
     const text = await fetchJina(url);
     return text ? `--- ${url} ---\n${text}` : '';
   }));
@@ -55,12 +93,12 @@ function httpPost(hostname, path, headers, body) {
 const TAB_SCHEMAS = {
   market: `{"market":{"headers":["Компания","Доля рынка","Рост/год","Позиция","Тренд"],"rows":[["Н1","X%","X%","Лидер","↑"],["Н2","X%","X%","Претендент","→"],["Н3","X%","X%","Быстрорастущий","↑"],["Н4","X%","X%","Зрелый","↓"],["Н5","X%","X%","Нишевый","→"]],"summary":["конкретный вывод1","конкретный вывод2","конкретный вывод3"],"bestCompany":"Н","bestAdvice":"конкретный совет что делать с учётом анализа"},"competitors":["Н1","Н2","Н3","Н4","Н5"]}`,
   audience: `{"audience":{"headers":["Компания","Сегмент","Роли","Боль","Зрелость"],"rows":[["Н1","сег","роли","боль","ур"],["Н2","сег","роли","боль","ур"],["Н3","сег","роли","боль","ур"],["Н4","сег","роли","боль","ур"],["Н5","сег","роли","боль","ур"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
-  pricing: `{"pricing":{"headers":["Компания","Модель","Цена","Бесплатно","Пробный период","Скидки"],"rows":[["Н1","За пользователя","$X/мес","✅","14д","есть"],["Н2","За пользователя","$X/мес","❌","7д","нет"],["Н3","Бесплатный план","$X/мес","✅","30д","есть"],["Н4","За пользователя","$X/мес","❌","—","нет"],["Н5","Бесплатный план","$X/мес","✅","14д","есть"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
+  pricing: `{"pricing":{"headers":["Компания","Модель","Старт цена","Бесплатно","Пробный период","Годовая скидка"],"rows":[["Н1","За пользователя","$X/мес","✅","14д","-20%"],["Н2","За пользователя","$X/мес","❌","7д","-18%"],["Н3","Бесплатный план","$X/мес","✅","—","-20%"],["Н4","За пользователя","$X/мес","❌","—","нет"],["Н5","Бесплатный план","$X/мес","✅","—","-45%"]],"summary":["конкретный вывод1","конкретный вывод2","конкретный вывод3"],"bestCompany":"Н","bestAdvice":"совет","chart":[{"name":"Н1","start":10.99,"color":"#60a5fa"},{"name":"Н2","start":9,"color":"#a78bfa"},{"name":"Н3","start":8,"color":"#34d399"},{"name":"Н4","start":5,"color":"#f87171"},{"name":"Н5","start":7,"color":"#fbbf24"}],"recommendation":{"model":"Freemium","freeLimit":"X проектов, Y пользователей","startPrice":"$X/мес","annualDiscount":"-30%","why":"Конкретное объяснение: почему эта модель лучшая для данного рынка и чем выигрывает у конкурентов"}}}`,
   channels: `{"channels":{"headers":["Компания","Модель роста","Поиск","Реклама","Соцсети","Email"],"rows":[["Н1","Через продукт","40%","30%","20%","10%"],["Н2","Через продажи","30%","40%","20%","10%"],["Н3","Через маркетинг","50%","20%","20%","10%"],["Н4","Продукт+Маркетинг","35%","35%","20%","10%"],["Н5","Через продажи","25%","45%","20%","10%"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
   product: `{"product":{"headers":["Компания","Функции","AI","Интеграции","Мобайл","Барьер"],"rows":[["Н1","функции","✅","100+","✅","🟢 Высокий"],["Н2","функции","❌","50+","✅","🟡 Средний"],["Н3","функции","✅","200+","❌","🔴 Низкий"],["Н4","функции","⚠️","80+","✅","🟢 Высокий"],["Н5","функции","✅","150+","❌","🟡 Средний"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
   reputation: `{"reputation":{"headers":["Компания","Рейтинг G2","Отзывов","Жалобы","Поддержка","PR"],"rows":[["Н1","4.5/5","5K","жалоба","4.3/5","🟢"],["Н2","4.2/5","3K","жалоба","4.0/5","🟡"],["Н3","4.7/5","8K","жалоба","4.5/5","🟢"],["Н4","3.9/5","2K","жалоба","3.8/5","🔴"],["Н5","4.4/5","6K","жалоба","4.2/5","🟡"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
   offers: `{"offers":{"headers":["Компания","Лид-магнит","Оффер","Лояльность","Ответ"],"rows":[["Н1","оффер","скидка","программа","2ч"],["Н2","оффер","скидка","программа","4ч"],["Н3","оффер","скидка","программа","1ч"],["Н4","оффер","скидка","программа","8ч"],["Н5","оффер","скидка","программа","3ч"]],"summary":["в1","в2","в3"],"bestCompany":"Н","bestAdvice":"совет"}}`,
-  strategy: `{"strategy":{"q1":{"goal":"цель","actions":[{"title":"действие","budget":"$XK","detail":"детали"},{"title":"действие","budget":"$XK","detail":"детали"}],"metrics":"метрики"},"q2":{"goal":"цель","actions":[{"title":"действие","budget":"$XK","detail":"детали"},{"title":"действие","budget":"$XK","detail":"детали"}],"metrics":"метрики"},"q3":{"goal":"цель","actions":[{"title":"действие","budget":"$XK","detail":"детали"},{"title":"действие","budget":"$XK","detail":"детали"}],"metrics":"метрики"},"q4":{"goal":"цель","actions":[{"title":"действие","budget":"$XK","detail":"детали"},{"title":"действие","budget":"$XK","detail":"детали"}],"metrics":"метрики"},"finance":{"totalInvest":"$XK","arr":"$XM","payback":"X мес","roi":"X%"},"criticalRec":"главное","importantRec":"второе"}}`,
+  strategy: `{"strategy":{"q1":{"goal":"цель","actions":[{"title":"действие","detail":"детали"},{"title":"действие","detail":"детали"}],"metrics":"метрики"},"q2":{"goal":"цель","actions":[{"title":"действие","detail":"детали"},{"title":"действие","detail":"детали"}],"metrics":"метрики"},"q3":{"goal":"цель","actions":[{"title":"действие","detail":"детали"},{"title":"действие","detail":"детали"}],"metrics":"метрики"},"q4":{"goal":"цель","actions":[{"title":"действие","detail":"детали"},{"title":"действие","detail":"детали"}],"metrics":"метрики"},"criticalRec":"главное","importantRec":"второе"}}`,
   swot: `{"swot":{"strengths":["сильная сторона 1","сильная сторона 2","сильная сторона 3","сильная сторона 4"],"weaknesses":["слабость 1","слабость 2","слабость 3","слабость 4"],"opportunities":["возможность 1","возможность 2","возможность 3","возможность 4"],"threats":["угроза 1","угроза 2","угроза 3","угроза 4"]}}`,
   positioning: `{"positioning":{"xLabel":"Простота","xLabelEnd":"Сложность","yLabel":"Малый бизнес","yLabelEnd":"Крупный бизнес","competitors":[{"name":"Н1","x":50,"y":60,"color":"#60a5fa"},{"name":"Н2","x":70,"y":75,"color":"#a78bfa"},{"name":"Н3","x":35,"y":30,"color":"#34d399"},{"name":"Н4","x":20,"y":25,"color":"#f87171"},{"name":"Н5","x":80,"y":55,"color":"#fbbf24"},{"name":"НашПродукт","x":40,"y":35,"color":"#d4a843","isClient":true}],"insight":"Текст инсайта: какая ниша свободна и почему это точка входа"}}`,
   quickwins: `{"quickwins":[{"day":"День 1–2","title":"Название действия","action":"Конкретное описание что делать","effort":"Низкие","impact":"Высокий","why":"Почему это сработает"},{"day":"День 3–4","title":"Название действия","action":"Конкретное описание что делать","effort":"Низкие","impact":"Высокий","why":"Почему это сработает"},{"day":"День 5–7","title":"Название действия","action":"Конкретное описание что делать","effort":"Средние","impact":"Очень высокий","why":"Почему это сработает"}]}`,
@@ -72,7 +110,7 @@ async function fetchTab(tab, area, segment, product, description, geo, competito
     ? `Конкуренты: ${competitors.join(', ')}\n`
     : '';
 
-  const scrapedContext = await scrapeCompetitorUrls(urls);
+  const scrapedContext = await scrapeForTab(tab, urls, competitors);
 
   const quickwinsExtra = tab === 'quickwins' ? `
 ВАЖНО для quickwins: давай только конкретные действия которые основатель делает сам за 1-2 дня.
@@ -88,13 +126,40 @@ async function fetchTab(tab, area, segment, product, description, geo, competito
 Поле "criticalRec" — одно самое важное действие прямо сейчас, конкретное и срочное.
 Поле "importantRec" — второй по важности шаг.` : '';
 
-  const prompt = `Продукт: ${product} | Сфера: ${area} | Сегмент: ${segment} | География: ${geo} | Цена: ${price}
+  const tabInstructions = {
+    market: `Покажи реальную картину рынка: кто лидер, кто растёт быстро, какие тренды. Доля рынка и темп роста — реалистичные оценки на основе открытых данных. summary — конкретные выводы что это значит для продукта ${product}.`,
+    positioning: `Расставь конкурентов на карте честно: кто реально простой vs сложный, кто для малого vs крупного бизнеса. insight — конкретно какая ниша свободна и почему именно там стоит занять позицию ${product}.`,
+    swot: `SWOT именно для ${product} на фоне этих конкурентов. Strengths/Weaknesses — честная оценка продукта, не общие слова. Opportunities/Threats — конкретные рыночные факторы прямо сейчас.`,
+    audience: `Опиши реальные сегменты аудитории у каждого конкурента: кто покупает, какие роли принимают решение, какую боль закрывает продукт. summary — какой сегмент недоохвачен конкурентами.`,
+    pricing: `Используй реальные данные о ценах если они есть в скрапинге. Модели: per seat, usage-based, flat fee, freemium. summary — конкретный вывод как ${product} должен ценообразоваться чтобы выиграть.`,
+    channels: `Опиши реальные каналы привлечения каждого конкурента на основе их публичной активности. Проценты — оценочные но реалистичные. summary — какой канал конкуренты недоиспользуют.`,
+    product: `Сравни функциональность честно: что реально есть у каждого. AI — есть ли реальные AI-фичи, не маркетинг. Барьер переключения — насколько сложно уйти от продукта. summary — где у ${product} есть шанс выиграть.`,
+    reputation: `Используй данные G2/Capterra если они есть в скрапинге. Жалобы — конкретные паттерны из отзывов (UX, поддержка, цена, баги). summary — какую жалобу конкурентов может решить ${product}.`,
+    offers: `Опиши реальные офферы: что дают бесплатно для привлечения, какие скидки, программы лояльности. summary — какой оффер сработает лучше всего для ${product}.`,
+    strategy: `Стратегия должна строиться на реальных слабостях конкурентов из анализа. Каждое действие — конкретный шаг который можно сделать, не абстрактное направление.`,
+    quickwins: `Действия только те, что реально можно сделать за 1-2 дня самостоятельно. Основаны на реальных пробелах конкурентов. why — конкретный факт почему это сработает именно здесь.`,
+    gaps: `Пробелы — реальные незакрытые потребности рынка которые НЕТ ни у одного из конкурентов. Не общие идеи, а конкретные незанятые ниши с описанием почему конкуренты их игнорируют.`
+  };
+
+  const tabHint = tabInstructions[tab] || '';
+
+  const prompt = `Ты — ведущий аналитик конкурентной разведки. Продукт: ${product} | Сфера: ${area} | Сегмент: ${segment} | География: ${geo} | Цена: ${price}
 Описание: ${description}
-${compLine}Заполни JSON реальными данными для раздела "${tab}". Максимум 5 слов в ячейке.
-ВАЖНО: Замени все плейсхолдеры (Н1, Н2, Н3, Н4, Н5, НашПродукт) на реальные названия известных компаний-конкурентов в этой сфере. НашПродукт замени на "${product}". Используй только реальные названия компаний, не "Конкурент 1" и не другие заглушки.${quickwinsExtra}${strategyExtra}${scrapedContext}
+${compLine}
+ЗАДАЧА: Заполни JSON для раздела "${tab}" реальными аналитическими данными.
+${tabHint}
+ПРАВИЛА:
+- Замени Н1–Н5 на реальные названия компаний-конкурентов в сфере "${area}". НашПродукт → "${product}".
+- Никаких "Конкурент 1", "Компания А" и других заглушек — только реальные бренды.
+- Максимум 5-7 слов в ячейке таблицы.
+- summary — конкретные выводы с именами компаний и цифрами, не общие фразы.
+- bestAdvice — одно конкретное действие для ${product} прямо сейчас.
+${quickwinsExtra}${strategyExtra}${scrapedContext}
 Шаблон: ${TAB_SCHEMAS[tab]}`;
 
-  const maxTokens = scrapedContext ? 1100 : 700;
+  const maxTokens = tab === 'pricing' ? (scrapedContext ? 1600 : 1100) : (scrapedContext ? 1400 : 900);
+
+  const systemPrompt = 'Ты — ведущий аналитик конкурентной разведки с 15 годами опыта. Верни ТОЛЬКО валидный JSON без markdown, без комментариев, без обёртки. Используй реальные данные о компаниях, конкретные цифры и факты. Никаких заглушек — только реальные бренды и реальные данные.';
 
   const isAnthropic = apiKey.startsWith('sk-ant-');
 
@@ -105,7 +170,7 @@ ${compLine}Заполни JSON реальными данными для разд
       {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: maxTokens,
-        system: 'Верни ТОЛЬКО валидный JSON без markdown. Заполни реальными данными.',
+        system: systemPrompt,
         messages: [{ role: 'user', content: prompt }]
       }
     );
@@ -119,10 +184,10 @@ ${compLine}Заполни JSON реальными данными для разд
       {
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'Верни ТОЛЬКО валидный JSON без markdown. Заполни реальными данными.' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.3,
+        temperature: 0.4,
         max_tokens: maxTokens,
         response_format: { type: 'json_object' }
       }
