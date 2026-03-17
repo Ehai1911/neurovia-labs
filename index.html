@@ -1921,13 +1921,15 @@ ${Object.keys(novaState.notes).length > 0 ? `
 
     const blob = new Blob([html], {type:'text/html'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    a.href = url;
-    if (isMobile) { a.download = (d.product||'report') + '_анализ.html'; }
-    else { a.target = '_blank'; }
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    if (isMobile) {
+      window.location.href = url;
+    } else {
+      const a = document.createElement('a');
+      a.href = url; a.target = '_blank';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
   }
 
   // ===== FULL PDF EXPORT =====
@@ -2042,13 +2044,15 @@ ${sectionsHtml}
 
     const blob = new Blob([html], {type:'text/html'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    a.href = url;
-    if (isMobile) { a.download = (state.data&&state.data.product||'report') + '_анализ.html'; }
-    else { a.target = '_blank'; }
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    if (isMobile) {
+      window.location.href = url;
+    } else {
+      const a = document.createElement('a');
+      a.href = url; a.target = '_blank';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
   }
 
   // ===== LOCALSTORAGE =====
